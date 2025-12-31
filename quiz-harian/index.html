@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Harian - MarendalSatu</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="../">
+                        <span class="logo-text">Marendal<span class="logo-accent">Satu</span></span>
+                    </a>
+                </div>
+                <div class="header-right">
+                    <div class="date-time">
+                        <span id="current-date"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav-menu" id="navMenu">
+                    <li class="nav-item"><a href="../">BERANDA</a></li>
+                    <li class="nav-item"><a href="../berita/">BERITA</a></li>
+                    <li class="nav-item"><a href="../umkm/">UMKM</a></li>
+                    <li class="nav-item"><a href="../event/">EVENT</a></li>
+                    <li class="nav-item"><a href="../kirim-berita/">KIRIM BERITA</a></li>
+                    <li class="nav-item has-submenu active">
+                        <a href="#">QUIZ BERITA</a>
+                        <ul class="submenu">
+                            <li><a href="../quiz-harian/">Kuis Harian</a></li>
+                            <li><a href="../quiz-mingguan/">Kuis Mingguan</a></li>
+                            <li><a href="../leaderboard/">Leaderboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="../tentang-kami/">TENTANG KAMI</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="quiz-page">
+                <div class="quiz-header">
+                    <h1>🎯 Kuis Harian</h1>
+                    <p>Uji pengetahuanmu tentang berita terkini Sumatera Utara!</p>
+                    <div class="quiz-info">
+                        <span class="quiz-badge">5 Soal</span>
+                        <span class="quiz-badge">10 Poin/Soal</span>
+                        <span class="quiz-badge">Waktu: 5 Menit</span>
+                    </div>
+                </div>
+
+                <div class="quiz-container" id="quizContainer">
+                    <div class="quiz-start" id="quizStart">
+                        <div class="quiz-icon">📰</div>
+                        <h2>Siap Bermain?</h2>
+                        <p>Jawab 5 pertanyaan seputar berita Sumut hari ini dan dapatkan poin!</p>
+                        <button class="btn-quiz-start" id="btnStartQuiz">Mulai Kuis</button>
+                    </div>
+
+                    <div class="quiz-questions" id="quizQuestions" style="display: none;">
+                        <div class="quiz-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span id="questionNumber">1/5</span>
+                        </div>
+                        <div class="quiz-timer">
+                            <span>⏱️</span>
+                            <span id="timer">05:00</span>
+                        </div>
+                        <div class="question-card" id="questionCard"></div>
+                    </div>
+
+                    <div class="quiz-result" id="quizResult" style="display: none;">
+                        <div class="result-icon" id="resultIcon">🏆</div>
+                        <h2 id="resultTitle">Selamat!</h2>
+                        <p id="resultMessage">Kamu mendapatkan skor tinggi!</p>
+                        <div class="result-score">
+                            <span class="score-label">Skor Kamu</span>
+                            <span class="score-value" id="scoreValue">0</span>
+                            <span class="score-max">/ 50 Poin</span>
+                        </div>
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="correctCount">0</span>
+                                <span class="stat-label">Benar</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="wrongCount">0</span>
+                                <span class="stat-label">Salah</span>
+                            </div>
+                        </div>
+                        <div class="result-actions">
+                            <button class="btn-quiz-retry" id="btnRetry">Main Lagi</button>
+                            <a href="../leaderboard/" class="btn-quiz-leaderboard">Lihat Leaderboard</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quiz-nav">
+                    <a href="../quiz-mingguan/" class="quiz-nav-item">
+                        <span class="nav-icon">📅</span>
+                        <span class="nav-text">Kuis Mingguan</span>
+                    </a>
+                    <a href="../leaderboard/" class="quiz-nav-item">
+                        <span class="nav-icon">🏆</span>
+                        <span class="nav-text">Leaderboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2025 MarendalSatu. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/quiz.js"></script>
+</body>
+</html>

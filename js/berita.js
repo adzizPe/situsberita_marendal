@@ -1,0 +1,268 @@
+// ===== Berita Page =====
+
+// Get published news from localStorage
+function getPublishedNews() {
+    return JSON.parse(localStorage.getItem('publishedNews') || '[]');
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Render news grid
+function renderNewsGrid() {
+    const container = document.getElementById('newsGrid');
+    if (!container) return;
+    
+    const published = getPublishedNews();
+    
+    // Start with static news (banjir pesantren)
+    let html = `
+        <article class="news-card-full" data-kategori="bencana" data-title="Banjir Seret Banyak Gelondongan Kayu Pesantren Darul Mukhlisin Karang Baru Aceh Tamiang">
+            <div class="news-card-image">
+                <span class="region-badge">ACEH</span>
+                <img src="../assets/2.png" alt="Banjir Pesantren Aceh Tamiang">
+            </div>
+            <div class="news-card-content">
+                <span class="news-card-category">Bencana</span>
+                <h3 class="news-card-title"><a href="./banjir-pesantren-aceh-tamiang/">Banjir Seret Banyak Gelondongan Kayu, Pesantren Darul Mukhlisin di Karang Baru Aceh Tamiang Terdampak</a></h3>
+                <p class="news-card-excerpt">Banjir menerjang kawasan Pesantren Darul Mukhlisin yang berada di Kecamatan Karang Baru, Kabupaten Aceh Tamiang. Arus banjir membawa banyak gelondongan kayu dari arah hulu...</p>
+                <span class="news-card-meta">📅 20 Des 2025 • 📍 Karang Baru, Aceh Tamiang</span>
+            </div>
+        </article>
+    `;
+    
+    // Add published news from admin
+    published.forEach(news => {
+        const images = Array.isArray(news.gambar) ? news.gambar : [news.gambar];
+        const searchTitle = (news.judul + ' ' + news.lokasi + ' ' + news.deskripsi).toLowerCase();
+        html += `
+            <article class="news-card-full" data-kategori="${news.kategori}" data-title="${escapeHtml(searchTitle)}">
+                <div class="news-card-image">
+                    <span class="news-badge-user">Kiriman Warga</span>
+                    <img src="${images[0]}" alt="${escapeHtml(news.judul)}">
+                </div>
+                <div class="news-card-content">
+                    <span class="news-card-category">${capitalize(news.kategori)}</span>
+                    <h3 class="news-card-title"><a href="./detail/?id=${news.id}">${escapeHtml(news.judul)}</a></h3>
+                    <p class="news-card-excerpt">${escapeHtml(news.deskripsi.substring(0, 150))}...</p>
+                    <span class="news-card-meta">📅 ${formatDate(news.tanggal)} • 📍 ${escapeHtml(news.lokasi)}</span>
+                </div>
+            </article>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Filter & Search
+let currentKategori = 'semua';
+let searchQuery = '';
+
+function filterNews() {
+    const newsCards = document.querySelectorAll('.news-card-full');
+    let visibleCount = 0;
+    
+    newsCards.forEach(card => {
+        const cardKategori = card.dataset.kategori;
+        const cardTitle = card.dataset.title || '';
+        const cardText = card.querySelector('.news-card-title').textContent.toLowerCase();
+        const cardExcerpt = card.querySelector('.news-card-excerpt')?.textContent.toLowerCase() || '';
+        
+        // Match kategori
+        const matchKategori = currentKategori === 'semua' || cardKategori === currentKategori;
+        
+        // Match search - cari di judul, excerpt, dan data-title
+        const searchLower = searchQuery.toLowerCase();
+        const matchSearch = searchQuery === '' || 
+            cardTitle.includes(searchLower) || 
+            cardText.includes(searchLower) || 
+            cardExcerpt.includes(searchLower);
+        
+        if (matchKategori && matchSearch) {
+            card.style.display = 'flex';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    updatePageTitle();
+    updateNoResults(visibleCount);
+}
+
+function updatePageTitle() {
+    const pageTitle = document.getElementById('pageTitle');
+    if (!pageTitle) return;
+    
+    const names = {
+        'semua': 'Semua Berita',
+        'bencana': 'Berita Bencana',
+        'politik': 'Berita Politik',
+        'olahraga': 'Berita Olahraga',
+        'kuliner': 'Berita Kuliner',
+        'ekonomi': 'Berita Ekonomi',
+        'kesehatan': 'Berita Kesehatan',
+        'pendidikan': 'Berita Pendidikan',
+        'wisata': 'Berita Wisata',
+        'lainnya': 'Berita Lainnya'
+    };
+    
+    let title = names[currentKategori] || 'Semua Berita';
+    if (searchQuery) {
+        title += ` - Hasil pencarian "${searchQuery}"`;
+    }
+    pageTitle.textContent = title;
+}
+
+function updateNoResults(count) {
+    const container = document.getElementById('newsGrid');
+    let noResults = document.getElementById('noResults');
+    
+    if (count === 0) {
+        if (!noResults) {
+            noResults = document.createElement('div');
+            noResults.id = 'noResults';
+            noResults.className = 'no-results';
+            noResults.innerHTML = `
+                <p>😕 Tidak ada berita yang ditemukan</p>
+                <button onclick="resetSearch()">Reset Pencarian</button>
+            `;
+            container.appendChild(noResults);
+        }
+        noResults.style.display = 'block';
+    } else if (noResults) {
+        noResults.style.display = 'none';
+    }
+}
+
+function resetSearch() {
+    searchQuery = '';
+    currentKategori = 'semua';
+    
+    const searchInput = document.getElementById('searchBerita');
+    if (searchInput) searchInput.value = '';
+    
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.kategori === 'semua') {
+            tab.classList.add('active');
+        }
+    });
+    
+    filterNews();
+    
+    // Update URL
+    const url = new URL(window.location);
+    url.searchParams.delete('kategori');
+    url.searchParams.delete('q');
+    window.history.pushState({}, '', url);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    renderNewsGrid();
+    
+    // URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const kategoriParam = urlParams.get('kategori');
+    const searchParam = urlParams.get('q');
+    
+    if (kategoriParam) {
+        currentKategori = kategoriParam;
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.kategori === kategoriParam) {
+                tab.classList.add('active');
+            }
+        });
+    }
+    
+    if (searchParam) {
+        searchQuery = searchParam;
+        const searchInput = document.getElementById('searchBerita');
+        if (searchInput) searchInput.value = searchParam;
+    }
+    
+    if (kategoriParam || searchParam) {
+        filterNews();
+    }
+    
+    // Category tabs
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentKategori = tab.dataset.kategori;
+            filterNews();
+            
+            const url = new URL(window.location);
+            if (currentKategori === 'semua') {
+                url.searchParams.delete('kategori');
+            } else {
+                url.searchParams.set('kategori', currentKategori);
+            }
+            window.history.pushState({}, '', url);
+        });
+    });
+    
+    // Search functionality
+    const searchInput = document.getElementById('searchBerita');
+    const searchBtn = document.getElementById('btnSearchBerita');
+    
+    if (searchInput) {
+        // Search on button click
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                searchQuery = searchInput.value.trim();
+                filterNews();
+                updateSearchUrl();
+            });
+        }
+        
+        // Search on Enter key
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchQuery = searchInput.value.trim();
+                filterNews();
+                updateSearchUrl();
+            }
+        });
+        
+        // Clear search when input is empty
+        searchInput.addEventListener('input', () => {
+            if (searchInput.value === '') {
+                searchQuery = '';
+                filterNews();
+                updateSearchUrl();
+            }
+        });
+    }
+});
+
+function updateSearchUrl() {
+    const url = new URL(window.location);
+    if (searchQuery) {
+        url.searchParams.set('q', searchQuery);
+    } else {
+        url.searchParams.delete('q');
+    }
+    window.history.pushState({}, '', url);
+}
+
+// Make resetSearch global
+window.resetSearch = resetSearch;
