@@ -1,4 +1,4 @@
-# situsberita_marendal## Project Status
+# Project Status
 Website is currently in the **pre-testing phase**.
 Features are under initial verification and may be unstable.
 
