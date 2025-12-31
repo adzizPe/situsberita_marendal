@@ -86,10 +86,10 @@ function renderNewsGrid(publishedNews = []) {
     // Start with static news (banjir pesantren)
     let html = `
         <article class="news-card-full" data-kategori="bencana" data-title="banjir seret banyak gelondongan kayu pesantren darul mukhlisin karang baru aceh tamiang">
-            <div class="news-card-image">
+            <a href="./banjir-pesantren-aceh-tamiang/" class="news-card-image">
                 <span class="region-badge">ACEH</span>
                 <img src="../assets/2.png" alt="Banjir Pesantren Aceh Tamiang">
-            </div>
+            </a>
             <div class="news-card-content">
                 <span class="news-card-category">Bencana</span>
                 <h3 class="news-card-title"><a href="./banjir-pesantren-aceh-tamiang/">Banjir Seret Banyak Gelondongan Kayu, Pesantren Darul Mukhlisin di Karang Baru Aceh Tamiang Terdampak</a></h3>
@@ -105,10 +105,10 @@ function renderNewsGrid(publishedNews = []) {
         const searchTitle = (news.judul + ' ' + news.lokasi + ' ' + news.deskripsi).toLowerCase();
         html += `
             <article class="news-card-full" data-kategori="${news.kategori}" data-title="${escapeHtml(searchTitle)}">
-                <div class="news-card-image">
+                <a href="./detail/?id=${news.id}" class="news-card-image">
                     <span class="news-badge-user">Kiriman Warga</span>
                     <img src="${images[0]}" alt="${escapeHtml(news.judul)}" onerror="this.src='https://placehold.co/400x200/eee/999?text=Gambar'">
-                </div>
+                </a>
                 <div class="news-card-content">
                     <span class="news-card-category">${capitalize(news.kategori)}</span>
                     <h3 class="news-card-title"><a href="./detail/?id=${news.id}">${escapeHtml(news.judul)}</a></h3>

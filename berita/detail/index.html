@@ -277,11 +277,115 @@
                 
                 <!-- Comments Section -->
                 <div class="comments-section" id="commentsSection">
-                    <h3>Komentar</h3>
-                    <div id="commentsList"></div>
-                    <div id="commentForm"></div>
+                    <h3>💬 Komentar</h3>
+                    <div id="commentsList" class="comments-list"></div>
+                    <div id="commentForm" class="comment-form-container"></div>
                 </div>
             `;
+            
+            // Load comments
+            loadComments(news.id);
+        }
+        
+        function loadComments(newsId) {
+            const listContainer = document.getElementById('commentsList');
+            const formContainer = document.getElementById('commentForm');
+            
+            // Check if user logged in
+            const user = JSON.parse(localStorage.getItem('googleUser') || 'null');
+            
+            // Comment form
+            if (user) {
+                formContainer.innerHTML = `
+                    <div class="comment-form">
+                        <img src="${user.picture}" alt="${user.name}" class="comment-avatar">
+                        <div class="comment-input-wrap">
+                            <textarea id="commentInput" placeholder="Tulis komentar..." rows="2"></textarea>
+                            <button type="button" onclick="submitComment('${newsId}')" class="btn-comment">Kirim</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                formContainer.innerHTML = `
+                    <div class="comment-login-prompt">
+                        <p>🔐 <a href="#" onclick="showLoginModal(); return false;">Login dengan Google</a> untuk berkomentar</p>
+                    </div>
+                `;
+            }
+            
+            // Load comments from Firebase
+            const commentsRef = database.ref('comments/' + newsId);
+            commentsRef.on('value', (snapshot) => {
+                const comments = [];
+                if (snapshot.exists()) {
+                    snapshot.forEach((child) => {
+                        comments.push({ id: child.key, ...child.val() });
+                    });
+                    comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                }
+                
+                if (comments.length === 0) {
+                    listContainer.innerHTML = '<p class="no-comments">Belum ada komentar. Jadilah yang pertama!</p>';
+                } else {
+                    listContainer.innerHTML = comments.map(c => `
+                        <div class="comment-item">
+                            <img src="${c.userPicture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.userName)}" alt="" class="comment-avatar">
+                            <div class="comment-body">
+                                <div class="comment-header">
+                                    <strong>${escapeHtml(c.userName)}</strong>
+                                    <span>${timeAgo(c.createdAt)}</span>
+                                </div>
+                                <p>${escapeHtml(c.text)}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            });
+        }
+        
+        window.submitComment = function(newsId) {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            
+            if (!text) {
+                alert('Tulis komentar terlebih dahulu');
+                return;
+            }
+            
+            const user = JSON.parse(localStorage.getItem('googleUser'));
+            if (!user) {
+                alert('Silakan login terlebih dahulu');
+                return;
+            }
+            
+            const commentData = {
+                text: text,
+                userName: user.name,
+                userEmail: user.email,
+                userPicture: user.picture,
+                userId: user.id,
+                createdAt: new Date().toISOString()
+            };
+            
+            database.ref('comments/' + newsId).push(commentData)
+                .then(() => {
+                    input.value = '';
+                })
+                .catch(err => {
+                    alert('Gagal mengirim komentar: ' + err.message);
+                });
+        };
+        
+        function timeAgo(dateStr) {
+            const now = new Date();
+            const date = new Date(dateStr);
+            const diff = Math.floor((now - date) / 1000);
+            
+            if (diff < 60) return 'Baru saja';
+            if (diff < 3600) return Math.floor(diff / 60) + ' menit lalu';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' jam lalu';
+            if (diff < 604800) return Math.floor(diff / 86400) + ' hari lalu';
+            return formatDate(dateStr);
         }
         
         function loadRelatedNews(kategori, currentId) {
