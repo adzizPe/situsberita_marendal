@@ -1,17 +1,63 @@
-// Kirim Berita JavaScript - Firebase Storage + Realtime Database
+// Kirim Berita - Compress + Firebase Database
 document.addEventListener('DOMContentLoaded', function() {
     initKirimBerita();
 });
 
-let uploadedFiles = []; // Store actual File objects
-let previewUrls = []; // Store preview URLs
+let uploadedFiles = [];
 
-// Check if user is logged in
 function isUserLoggedIn() {
     return localStorage.getItem('googleUser') !== null;
 }
 
-// Show login notification
+// Compress image
+function compressImage(file, maxWidth = 800, quality = 0.6) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const compressedData = canvas.toDataURL('image/jpeg', quality);
+                resolve(compressedData);
+            };
+            img.onerror = () => reject(new Error('Gagal memproses gambar'));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('Gagal membaca file'));
+        reader.readAsDataURL(file);
+    });
+}
+
+// Process video - convert to thumbnail only (video too large for DB)
+function processVideo(file) {
+    return new Promise((resolve, reject) => {
+        const sizeInMB = file.size / (1024 * 1024);
+        if (sizeInMB > 5) {
+            reject(new Error(`Video terlalu besar (${sizeInMB.toFixed(1)}MB). Maksimal 5MB.`));
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('Gagal membaca video'));
+        reader.readAsDataURL(file);
+    });
+}
+
 function showLoginNotification() {
     const existing = document.getElementById('loginNotification');
     if (existing) existing.remove();
@@ -26,9 +72,7 @@ function showLoginNotification() {
                 <strong>Login Diperlukan</strong>
                 <p>Silakan login dengan Google untuk mengirim berita</p>
             </div>
-            <button type="button" class="login-notif-btn" onclick="showLoginModal(); closeLoginNotification();">
-                Login Sekarang
-            </button>
+            <button type="button" class="login-notif-btn" onclick="showLoginModal(); closeLoginNotification();">Login</button>
             <button type="button" class="login-notif-close" onclick="closeLoginNotification()">×</button>
         </div>
     `;
@@ -45,38 +89,22 @@ function closeLoginNotification() {
     }
 }
 
-// Show upload progress modal
-function showUploadProgress() {
-    const existing = document.getElementById('uploadModal');
-    if (existing) existing.remove();
-    
-    const modal = document.createElement('div');
-    modal.id = 'uploadModal';
-    modal.className = 'kb-modal-overlay active';
-    modal.innerHTML = `
-        <div class="kb-modal kb-upload-modal">
-            <div class="kb-upload-spinner"></div>
-            <h3>Mengunggah Berita...</h3>
-            <p>Mohon tunggu, sedang mengupload file</p>
-            <div class="kb-progress-bar">
-                <div class="kb-progress" id="uploadProgress">0%</div>
+function showUploadProgress(status) {
+    let modal = document.getElementById('uploadModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'uploadModal';
+        modal.className = 'kb-modal-overlay active';
+        modal.innerHTML = `
+            <div class="kb-modal kb-upload-modal">
+                <div class="kb-upload-spinner"></div>
+                <h3>Mengirim Berita...</h3>
+                <p id="uploadStatus">Memproses...</p>
             </div>
-            <p class="kb-upload-status" id="uploadStatus">Mempersiapkan...</p>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-function updateUploadProgress(percent, status) {
-    const progressEl = document.getElementById('uploadProgress');
-    const statusEl = document.getElementById('uploadStatus');
-    if (progressEl) {
-        progressEl.style.width = percent + '%';
-        progressEl.textContent = percent.toFixed(0) + '%';
+        `;
+        document.body.appendChild(modal);
     }
-    if (statusEl && status) {
-        statusEl.textContent = status;
-    }
+    document.getElementById('uploadStatus').textContent = status || 'Memproses...';
 }
 
 function hideUploadProgress() {
@@ -99,7 +127,7 @@ function initKirimBerita() {
     const tanggalInput = document.getElementById('tanggalBerita');
     const waktuInput = document.getElementById('waktuBerita');
     
-    // Auto-fill name from Google account
+    // Auto-fill from Google
     const savedUser = localStorage.getItem('googleUser');
     if (savedUser) {
         const user = JSON.parse(savedUser);
@@ -109,110 +137,91 @@ function initKirimBerita() {
         }
     }
 
-    // Set tanggal dan waktu hari ini
     const now = new Date();
     if (tanggalInput) tanggalInput.value = now.toISOString().split('T')[0];
     if (waktuInput) waktuInput.value = now.toTimeString().slice(0, 5);
 
-    // Upload area events
+    // Upload events
     uploadArea.addEventListener('click', (e) => {
         if (!e.target.closest('.kb-preview-item') && !e.target.closest('.kb-preview-add')) {
-            if (!isUserLoggedIn()) {
-                showLoginNotification();
-                return;
-            }
+            if (!isUserLoggedIn()) { showLoginNotification(); return; }
             fileInput.click();
         }
     });
     
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
-        if (!isUserLoggedIn()) return;
-        uploadArea.classList.add('dragover');
+        if (isUserLoggedIn()) uploadArea.classList.add('dragover');
     });
 
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-    });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
 
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
-        if (!isUserLoggedIn()) {
-            showLoginNotification();
-            return;
-        }
+        if (!isUserLoggedIn()) { showLoginNotification(); return; }
         handleFiles(e.dataTransfer.files);
     });
 
     fileInput.addEventListener('change', (e) => {
-        if (!isUserLoggedIn()) {
-            showLoginNotification();
-            fileInput.value = '';
-            return;
-        }
+        if (!isUserLoggedIn()) { showLoginNotification(); fileInput.value = ''; return; }
         handleFiles(e.target.files);
         fileInput.value = '';
     });
 
-    function handleFiles(files) {
-        Array.from(files).forEach(file => {
+    async function handleFiles(files) {
+        for (const file of Array.from(files)) {
             if (uploadedFiles.length >= 5) {
                 alert('Maksimal 5 file.');
                 return;
             }
             
             const validImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            const validVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'];
+            const validVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
             const isImage = validImageTypes.includes(file.type);
             const isVideo = validVideoTypes.includes(file.type);
             
             if (!isImage && !isVideo) {
                 alert('Format tidak didukung. Gunakan JPG, PNG, WebP, GIF, MP4, MOV, atau WebM.');
-                return;
+                continue;
             }
 
-            // Store file object
-            uploadedFiles.push({
-                file: file,
-                type: isVideo ? 'video' : 'image',
-                name: file.name
-            });
-            
-            // Create preview URL
-            const previewUrl = URL.createObjectURL(file);
-            previewUrls.push({
-                url: previewUrl,
-                type: isVideo ? 'video' : 'image'
-            });
-            
-            renderPreviews();
-        });
+            try {
+                let data, type;
+                
+                if (isImage) {
+                    data = await compressImage(file);
+                    type = 'image';
+                } else {
+                    data = await processVideo(file);
+                    type = 'video';
+                }
+                
+                uploadedFiles.push({ data, type, name: file.name });
+                renderPreviews();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
     }
 
     function renderPreviews() {
-        if (previewUrls.length > 0) {
+        if (uploadedFiles.length > 0) {
             uploadInner.style.display = 'none';
-            previewContainer.innerHTML = previewUrls.map((media, idx) => {
-                const isVideo = media.type === 'video';
-                return `
-                    <div class="kb-preview-item ${isVideo ? 'kb-preview-video' : ''}">
-                        ${isVideo ? 
-                            `<video src="${media.url}" muted></video><span class="kb-video-badge">▶ Video</span>` : 
-                            `<img src="${media.url}" alt="Preview ${idx + 1}">`
-                        }
-                        <button type="button" class="kb-preview-remove" onclick="removeFile(${idx})">×</button>
-                        ${idx === 0 ? '<span class="kb-preview-main">Utama</span>' : ''}
-                    </div>
-                `;
-            }).join('') + `
-                ${previewUrls.length < 5 ? `
-                    <div class="kb-preview-add" onclick="triggerFileInput()">
-                        <span>+</span>
-                        <small>Tambah</small>
-                    </div>
-                ` : ''}
-            `;
+            previewContainer.innerHTML = uploadedFiles.map((media, idx) => `
+                <div class="kb-preview-item ${media.type === 'video' ? 'kb-preview-video' : ''}">
+                    ${media.type === 'video' ? 
+                        `<video src="${media.data}" muted></video><span class="kb-video-badge">▶ Video</span>` : 
+                        `<img src="${media.data}" alt="Preview">`
+                    }
+                    <button type="button" class="kb-preview-remove" onclick="removeFile(${idx})">×</button>
+                    ${idx === 0 ? '<span class="kb-preview-main">Utama</span>' : ''}
+                </div>
+            `).join('') + (uploadedFiles.length < 5 ? `
+                <div class="kb-preview-add" onclick="triggerFileInput()">
+                    <span>+</span><small>Tambah</small>
+                </div>
+            ` : '');
             previewContainer.classList.add('active');
         } else {
             uploadInner.style.display = 'block';
@@ -222,64 +231,46 @@ function initKirimBerita() {
     }
 
     window.triggerFileInput = function() {
-        if (!isUserLoggedIn()) {
-            showLoginNotification();
-            return;
-        }
-        document.getElementById('gambarBerita').click();
+        if (!isUserLoggedIn()) { showLoginNotification(); return; }
+        fileInput.click();
     };
 
     window.removeFile = function(idx) {
-        // Revoke preview URL
-        URL.revokeObjectURL(previewUrls[idx].url);
         uploadedFiles.splice(idx, 1);
-        previewUrls.splice(idx, 1);
         renderPreviews();
     };
 
-    // Character count
     if (textarea) {
         textarea.addEventListener('input', () => {
             charCount.textContent = textarea.value.length;
         });
     }
 
-    // Contact type
     contactRadios.forEach(radio => {
         radio.addEventListener('change', () => {
-            if (radio.value === 'whatsapp') {
-                kontakInput.placeholder = '08xxxxxxxxxx';
-                kontakInput.type = 'tel';
-            } else {
-                kontakInput.placeholder = 'email@contoh.com';
-                kontakInput.type = 'email';
-            }
+            kontakInput.placeholder = radio.value === 'whatsapp' ? '08xxxxxxxxxx' : 'email@contoh.com';
+            kontakInput.type = radio.value === 'whatsapp' ? 'tel' : 'email';
         });
     });
 
-    // Submit form
+    // Submit
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        if (!isUserLoggedIn()) {
-            showLoginNotification();
-            return;
-        }
+        if (!isUserLoggedIn()) { showLoginNotification(); return; }
         
         const user = JSON.parse(localStorage.getItem('googleUser'));
         
         if (uploadedFiles.length === 0) {
-            alert('Silakan upload minimal 1 foto/video berita.');
+            alert('Upload minimal 1 foto/video.');
             return;
         }
 
-        const noHoax = document.getElementById('noHoax');
-        if (!noHoax.checked) {
-            alert('Anda harus menyetujui pernyataan bukan hoax.');
+        if (!document.getElementById('noHoax').checked) {
+            alert('Centang pernyataan bukan hoax.');
             return;
         }
 
-        // Validate fields
         const judul = document.getElementById('judulBerita').value.trim();
         const penerbit = document.getElementById('namaPenerbit').value.trim();
         const deskripsi = document.getElementById('deskripsiBerita').value.trim();
@@ -288,49 +279,28 @@ function initKirimBerita() {
         const kontakValue = document.getElementById('kontakValue').value.trim();
         
         if (!judul || !penerbit || !deskripsi || !lokasi || !kategori || !kontakValue) {
-            alert('Mohon lengkapi semua field yang wajib diisi.');
+            alert('Lengkapi semua field.');
             return;
         }
 
-        // Show progress
-        showUploadProgress();
+        showUploadProgress('Menyimpan berita...');
         
         try {
-            // Initialize Firebase
             await window.firebaseNews.init();
             
-            const newsId = 'news_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            
-            // Upload files to Firebase Storage
-            updateUploadProgress(10, 'Mengupload file...');
-            const mediaUrls = [];
-            const mediaTypes = [];
-            
-            for (let i = 0; i < uploadedFiles.length; i++) {
-                const fileData = uploadedFiles[i];
-                updateUploadProgress(10 + (i / uploadedFiles.length * 70), `Mengupload file ${i + 1}/${uploadedFiles.length}...`);
-                
-                const url = await window.firebaseNews.upload(fileData.file, newsId, i);
-                mediaUrls.push(url);
-                mediaTypes.push(fileData.type);
-            }
-            
-            updateUploadProgress(85, 'Menyimpan data berita...');
-            
-            // Save news data to Firebase Database
             const newsData = {
-                id: newsId,
-                judul: judul,
-                penerbit: penerbit,
-                gambar: mediaUrls,
-                mediaTypes: mediaTypes,
-                deskripsi: deskripsi,
-                tanggal: document.getElementById('tanggalBerita').value,
-                waktu: document.getElementById('waktuBerita').value,
-                lokasi: lokasi,
-                kategori: kategori,
+                id: 'news_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                judul,
+                penerbit,
+                gambar: uploadedFiles.map(f => f.data),
+                mediaTypes: uploadedFiles.map(f => f.type),
+                deskripsi,
+                tanggal: tanggalInput.value,
+                waktu: waktuInput.value,
+                lokasi,
+                kategori,
                 kontakType: document.querySelector('input[name="contactType"]:checked').value,
-                kontakValue: kontakValue,
+                kontakValue,
                 status: 'pending',
                 submittedAt: new Date().toISOString(),
                 submittedBy: {
@@ -343,32 +313,22 @@ function initKirimBerita() {
             
             await window.firebaseNews.save(newsData);
             
-            updateUploadProgress(100, 'Selesai!');
+            hideUploadProgress();
+            document.getElementById('successModal').classList.add('active');
             
-            // Hide progress and show success
-            setTimeout(() => {
-                hideUploadProgress();
-                document.getElementById('successModal').classList.add('active');
-                
-                // Reset form
-                form.reset();
-                uploadedFiles = [];
-                previewUrls.forEach(p => URL.revokeObjectURL(p.url));
-                previewUrls = [];
-                renderPreviews();
-                if (charCount) charCount.textContent = '0';
-                if (tanggalInput) tanggalInput.value = new Date().toISOString().split('T')[0];
-                if (waktuInput) waktuInput.value = new Date().toTimeString().slice(0, 5);
-                
-                // Re-fill name
-                const namaPenerbit = document.getElementById('namaPenerbit');
-                if (namaPenerbit) namaPenerbit.value = user.name;
-            }, 500);
+            // Reset
+            form.reset();
+            uploadedFiles = [];
+            renderPreviews();
+            if (charCount) charCount.textContent = '0';
+            tanggalInput.value = new Date().toISOString().split('T')[0];
+            waktuInput.value = new Date().toTimeString().slice(0, 5);
+            document.getElementById('namaPenerbit').value = user.name;
             
         } catch (err) {
-            console.error('Error submitting news:', err);
             hideUploadProgress();
-            alert('Gagal mengirim berita: ' + err.message);
+            console.error(err);
+            alert('Gagal mengirim: ' + err.message);
         }
     });
 }
@@ -376,10 +336,3 @@ function initKirimBerita() {
 function closeModal() {
     document.getElementById('successModal').classList.remove('active');
 }
-
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('successModal');
-    if (e.target === modal) {
-        closeModal();
-    }
-});
