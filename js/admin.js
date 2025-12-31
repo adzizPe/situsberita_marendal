@@ -126,17 +126,21 @@ function loadNews() {
     const checkFirebase = () => {
         if (window.firebaseNews) {
             window.firebaseNews.init().then(() => {
+                console.log('Firebase ready, loading news...');
                 window.firebaseNews.getAll((news) => {
+                    console.log('News loaded:', news.length);
                     allNewsData = news;
                     updateStats();
-                    renderNews(news, 'pending');
+                    const activeFilter = document.querySelector('.adm-filter-btn.active');
+                    renderNews(news, activeFilter ? activeFilter.dataset.filter : 'pending');
                 });
             }).catch(err => {
                 console.error('Firebase init error:', err);
-                container.innerHTML = '<p style="text-align:center;padding:40px;color:#c00;">Gagal memuat data. Refresh halaman.</p>';
+                container.innerHTML = '<p style="text-align:center;padding:40px;color:#c00;">Gagal memuat. Error: ' + err.message + '</p>';
             });
         } else {
-            setTimeout(checkFirebase, 500);
+            console.log('Waiting for firebaseNews...');
+            setTimeout(checkFirebase, 300);
         }
     };
     

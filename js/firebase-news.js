@@ -50,12 +50,20 @@ async function saveNewsToFirebase(newsData) {
 // Get all news from Firebase (realtime)
 function getAllNews(callback) {
     const newsRef = newsDatabase.ref('newsSubmissions');
-    newsRef.orderByChild('submittedAt').on('value', (snapshot) => {
+    newsRef.on('value', (snapshot) => {
         const news = [];
-        snapshot.forEach((child) => {
-            news.unshift(child.val());
-        });
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                news.push(child.val());
+            });
+            // Sort by submittedAt descending
+            news.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        }
+        console.log('Firebase news data:', news);
         callback(news);
+    }, (error) => {
+        console.error('Firebase read error:', error);
+        callback([]);
     });
 }
 
