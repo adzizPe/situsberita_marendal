@@ -102,12 +102,18 @@ function renderNewsGrid(publishedNews = []) {
     // Add approved news from Firebase
     publishedNews.forEach(news => {
         const images = Array.isArray(news.gambar) ? news.gambar : [news.gambar];
+        const mediaTypes = news.mediaTypes || images.map(() => 'image');
+        const isVideo = mediaTypes[0] === 'video';
         const searchTitle = (news.judul + ' ' + news.lokasi + ' ' + news.deskripsi).toLowerCase();
+        
         html += `
             <article class="news-card-full" data-kategori="${news.kategori}" data-title="${escapeHtml(searchTitle)}">
                 <a href="./detail/?id=${news.id}" class="news-card-image">
                     <span class="news-badge-user">Kiriman Warga</span>
-                    <img src="${images[0]}" alt="${escapeHtml(news.judul)}" onerror="this.src='https://placehold.co/400x200/eee/999?text=Gambar'">
+                    ${isVideo ? 
+                        `<video src="${images[0]}" autoplay muted loop playsinline></video>` :
+                        `<img src="${images[0]}" alt="${escapeHtml(news.judul)}" onerror="this.src='https://placehold.co/400x200/eee/999?text=Gambar'">`
+                    }
                 </a>
                 <div class="news-card-content">
                     <span class="news-card-category">${capitalize(news.kategori)}</span>
