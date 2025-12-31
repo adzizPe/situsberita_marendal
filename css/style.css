@@ -8401,3 +8401,505 @@ a.news-card-image video {
   background: #000;
   border-radius: 8px;
 }
+
+
+/* ===== About Page ===== */
+.about-hero {
+  text-align: center;
+  padding: 60px 20px;
+  margin-bottom: 40px;
+}
+
+.about-hero h1 {
+  font-size: 2.2rem;
+  color: var(--text-dark);
+  margin-bottom: 15px;
+  line-height: 1.3;
+}
+
+.about-hero h1 span {
+  color: var(--primary);
+}
+
+.about-hero p {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.about-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.about-section {
+  margin-bottom: 50px;
+}
+
+.about-text h2 {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  position: relative;
+  padding-left: 15px;
+}
+
+.about-text h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 4px;
+  height: 24px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+.about-text p {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-body);
+  margin-bottom: 18px;
+}
+
+.about-text em {
+  color: var(--primary);
+  font-style: italic;
+}
+
+/* Belief Cards */
+.about-mission h2 {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  color: var(--text-dark);
+}
+
+.belief-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.belief-card {
+  background: var(--bg-card);
+  padding: 25px 20px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.belief-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.belief-card h3 {
+  font-size: 1rem;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.belief-card p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* CTA Box */
+.cta-box {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  padding: 40px 30px;
+  border-radius: 16px;
+  text-align: center;
+  color: #fff;
+}
+
+.cta-box h2 {
+  font-size: 1.6rem;
+  margin-bottom: 12px;
+}
+
+.cta-box p {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 25px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-button {
+  display: inline-block;
+  background: #fff;
+  color: var(--primary);
+  padding: 14px 35px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.2s;
+}
+
+.cta-button:hover {
+  transform: scale(1.05);
+}
+
+/* Contact */
+.about-contact {
+  text-align: center;
+}
+
+.about-contact h2 {
+  font-size: 1.4rem;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.about-contact > p {
+  color: var(--text-muted);
+  margin-bottom: 25px;
+}
+
+.contact-info {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: var(--text-body);
+}
+
+.contact-item span:first-child {
+  font-size: 1.2rem;
+}
+
+.contact-item a {
+  color: var(--primary);
+}
+
+/* Dark Mode About */
+[data-theme="dark"] .about-hero h1 {
+  color: #fff;
+}
+
+[data-theme="dark"] .about-text h2,
+[data-theme="dark"] .about-mission h2,
+[data-theme="dark"] .about-contact h2 {
+  color: #fff;
+}
+
+[data-theme="dark"] .about-text p {
+  color: #bbb;
+}
+
+[data-theme="dark"] .belief-card {
+  background: #0a0a0a;
+  border-color: #1a1a1a;
+}
+
+[data-theme="dark"] .belief-card h3 {
+  color: #fff;
+}
+
+[data-theme="dark"] .contact-item {
+  color: #ccc;
+}
+
+/* Mobile About */
+@media (max-width: 768px) {
+  .about-hero {
+    padding: 40px 15px;
+  }
+  
+  .about-hero h1 {
+    font-size: 1.6rem;
+  }
+  
+  .about-hero p {
+    font-size: 1rem;
+  }
+  
+  .belief-cards {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .cta-box {
+    padding: 30px 20px;
+  }
+  
+  .cta-box h2 {
+    font-size: 1.3rem;
+  }
+  
+  .contact-info {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+}
+
+
+/* ===== About Emoji Page ===== */
+.about-emoji-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 0 60px;
+}
+
+.emoji-hero {
+  text-align: center;
+  padding: 50px 20px;
+}
+
+.big-emoji {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.emoji-hero h1 {
+  font-size: 2rem;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.emoji-hero p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.emoji-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 25px 15px;
+  text-align: center;
+}
+
+.emoji-card span {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.emoji-card h3 {
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.emoji-card p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.emoji-stats {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 30px 0;
+  margin-bottom: 40px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-emoji {
+  font-size: 1.5rem;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 0.9rem;
+  color: var(--text-body);
+  font-weight: 500;
+}
+
+.emoji-cta {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: 16px;
+  padding: 40px 25px;
+  text-align: center;
+  color: #fff;
+  margin-bottom: 40px;
+}
+
+.emoji-cta span {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.emoji-cta h3 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.emoji-btn {
+  display: inline-block;
+  background: #fff;
+  color: var(--primary);
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.emoji-btn:hover {
+  transform: scale(1.05);
+}
+
+.emoji-contact {
+  text-align: center;
+}
+
+.emoji-contact h3 {
+  font-size: 1.2rem;
+  color: var(--text-dark);
+  margin-bottom: 15px;
+}
+
+.emoji-contact p {
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* Dark mode emoji page */
+[data-theme="dark"] .emoji-hero h1,
+[data-theme="dark"] .emoji-card h3,
+[data-theme="dark"] .emoji-contact h3 {
+  color: #fff;
+}
+
+[data-theme="dark"] .emoji-card {
+  background: #0a0a0a;
+  border-color: #1a1a1a;
+}
+
+[data-theme="dark"] .emoji-stats {
+  border-color: #222;
+}
+
+[data-theme="dark"] .stat-value {
+  color: #ccc;
+}
+
+/* Mobile emoji page */
+@media (max-width: 768px) {
+  .emoji-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .big-emoji {
+    font-size: 3rem;
+  }
+  
+  .emoji-hero h1 {
+    font-size: 1.6rem;
+  }
+  
+  .emoji-card {
+    padding: 20px 12px;
+  }
+  
+  .emoji-card span {
+    font-size: 1.8rem;
+  }
+  
+  .emoji-stats {
+    gap: 25px;
+    flex-wrap: wrap;
+  }
+  
+  .emoji-cta {
+    padding: 30px 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .emoji-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .emoji-card span {
+    font-size: 1.5rem;
+  }
+  
+  .emoji-card h3 {
+    font-size: 0.85rem;
+  }
+  
+  .emoji-card p {
+    font-size: 0.8rem;
+  }
+}
+
+
+/* About Simple */
+.about-simple {
+  text-align: center;
+  padding: 100px 20px;
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.about-emoji {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.about-simple h1 {
+  font-size: 2.5rem;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.about-simple p {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .about-simple h1 {
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .about-emoji {
+    font-size: 4rem;
+  }
+  
+  .about-simple h1 {
+    font-size: 1.8rem;
+  }
+  
+  .about-simple p {
+    font-size: 1rem;
+  }
+}
