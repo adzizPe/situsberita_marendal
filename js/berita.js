@@ -1,8 +1,63 @@
-// ===== Berita Page =====
+// ===== Berita Page - Firebase Integration =====
 
-// Get published news from localStorage
-function getPublishedNews() {
-    return JSON.parse(localStorage.getItem('publishedNews') || '[]');
+// Firebase config
+const firebaseBeritaConfig = {
+    apiKey: "AIzaSyAAjCd2CvsfiRCVWcwNSmjNt_w3N4eVSbM",
+    authDomain: "login-fe9bf.firebaseapp.com",
+    databaseURL: "https://login-fe9bf-default-rtdb.firebaseio.com",
+    projectId: "login-fe9bf",
+    storageBucket: "login-fe9bf.firebasestorage.app",
+    messagingSenderId: "698680870534",
+    appId: "1:698680870534:web:bc3f03d534a9659f6d7307"
+};
+
+let beritaDatabase;
+
+// Initialize Firebase for berita page
+function initFirebaseBerita() {
+    return new Promise((resolve, reject) => {
+        const checkFirebase = setInterval(() => {
+            if (typeof firebase !== 'undefined') {
+                clearInterval(checkFirebase);
+                try {
+                    let app;
+                    try {
+                        app = firebase.app('beritaApp');
+                    } catch (e) {
+                        app = firebase.initializeApp(firebaseBeritaConfig, 'beritaApp');
+                    }
+                    beritaDatabase = app.database();
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        }, 100);
+        
+        setTimeout(() => {
+            clearInterval(checkFirebase);
+            reject(new Error('Firebase not loaded'));
+        }, 10000);
+    });
+}
+
+// Get approved news from Firebase
+function getApprovedNews(callback) {
+    const newsRef = beritaDatabase.ref('newsSubmissions');
+    newsRef.on('value', (snapshot) => {
+        const news = [];
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const item = child.val();
+                if (item.status === 'approved') {
+                    news.push(item);
+                }
+            });
+            // Sort by date descending
+            news.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        }
+        callback(news);
+    });
 }
 
 function formatDate(dateStr) {
@@ -24,15 +79,13 @@ function capitalize(str) {
 }
 
 // Render news grid
-function renderNewsGrid() {
+function renderNewsGrid(publishedNews = []) {
     const container = document.getElementById('newsGrid');
     if (!container) return;
     
-    const published = getPublishedNews();
-    
     // Start with static news (banjir pesantren)
     let html = `
-        <article class="news-card-full" data-kategori="bencana" data-title="Banjir Seret Banyak Gelondongan Kayu Pesantren Darul Mukhlisin Karang Baru Aceh Tamiang">
+        <article class="news-card-full" data-kategori="bencana" data-title="banjir seret banyak gelondongan kayu pesantren darul mukhlisin karang baru aceh tamiang">
             <div class="news-card-image">
                 <span class="region-badge">ACEH</span>
                 <img src="../assets/2.png" alt="Banjir Pesantren Aceh Tamiang">
@@ -46,20 +99,20 @@ function renderNewsGrid() {
         </article>
     `;
     
-    // Add published news from admin
-    published.forEach(news => {
+    // Add approved news from Firebase
+    publishedNews.forEach(news => {
         const images = Array.isArray(news.gambar) ? news.gambar : [news.gambar];
         const searchTitle = (news.judul + ' ' + news.lokasi + ' ' + news.deskripsi).toLowerCase();
         html += `
             <article class="news-card-full" data-kategori="${news.kategori}" data-title="${escapeHtml(searchTitle)}">
                 <div class="news-card-image">
                     <span class="news-badge-user">Kiriman Warga</span>
-                    <img src="${images[0]}" alt="${escapeHtml(news.judul)}">
+                    <img src="${images[0]}" alt="${escapeHtml(news.judul)}" onerror="this.src='https://placehold.co/400x200/eee/999?text=Gambar'">
                 </div>
                 <div class="news-card-content">
                     <span class="news-card-category">${capitalize(news.kategori)}</span>
                     <h3 class="news-card-title"><a href="./detail/?id=${news.id}">${escapeHtml(news.judul)}</a></h3>
-                    <p class="news-card-excerpt">${escapeHtml(news.deskripsi.substring(0, 150))}...</p>
+                    <p class="news-card-excerpt">${escapeHtml((news.deskripsi || '').substring(0, 150))}...</p>
                     <span class="news-card-meta">📅 ${formatDate(news.tanggal)} • 📍 ${escapeHtml(news.lokasi)}</span>
                 </div>
             </article>
@@ -67,6 +120,9 @@ function renderNewsGrid() {
     });
     
     container.innerHTML = html;
+    
+    // Apply current filter
+    filterNews();
 }
 
 // Filter & Search
@@ -83,10 +139,7 @@ function filterNews() {
         const cardText = card.querySelector('.news-card-title').textContent.toLowerCase();
         const cardExcerpt = card.querySelector('.news-card-excerpt')?.textContent.toLowerCase() || '';
         
-        // Match kategori
         const matchKategori = currentKategori === 'semua' || cardKategori === currentKategori;
-        
-        // Match search - cari di judul, excerpt, dan data-title
         const searchLower = searchQuery.toLowerCase();
         const matchSearch = searchQuery === '' || 
             cardTitle.includes(searchLower) || 
@@ -124,7 +177,7 @@ function updatePageTitle() {
     
     let title = names[currentKategori] || 'Semua Berita';
     if (searchQuery) {
-        title += ` - Hasil pencarian "${searchQuery}"`;
+        title += ` - "${searchQuery}"`;
     }
     pageTitle.textContent = title;
 }
@@ -166,7 +219,6 @@ function resetSearch() {
     
     filterNews();
     
-    // Update URL
     const url = new URL(window.location);
     url.searchParams.delete('kategori');
     url.searchParams.delete('q');
@@ -175,32 +227,47 @@ function resetSearch() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    renderNewsGrid();
+    // Show loading
+    const container = document.getElementById('newsGrid');
+    if (container) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:#888;">Memuat berita...</p>';
+    }
     
-    // URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const kategoriParam = urlParams.get('kategori');
-    const searchParam = urlParams.get('q');
-    
-    if (kategoriParam) {
-        currentKategori = kategoriParam;
-        document.querySelectorAll('.category-tab').forEach(tab => {
-            tab.classList.remove('active');
-            if (tab.dataset.kategori === kategoriParam) {
-                tab.classList.add('active');
+    // Init Firebase and load news
+    initFirebaseBerita().then(() => {
+        getApprovedNews((news) => {
+            renderNewsGrid(news);
+            
+            // Apply URL params after render
+            const urlParams = new URLSearchParams(window.location.search);
+            const kategoriParam = urlParams.get('kategori');
+            const searchParam = urlParams.get('q');
+            
+            if (kategoriParam) {
+                currentKategori = kategoriParam;
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                    if (tab.dataset.kategori === kategoriParam) {
+                        tab.classList.add('active');
+                    }
+                });
+            }
+            
+            if (searchParam) {
+                searchQuery = searchParam;
+                const searchInput = document.getElementById('searchBerita');
+                if (searchInput) searchInput.value = searchParam;
+            }
+            
+            if (kategoriParam || searchParam) {
+                filterNews();
             }
         });
-    }
-    
-    if (searchParam) {
-        searchQuery = searchParam;
-        const searchInput = document.getElementById('searchBerita');
-        if (searchInput) searchInput.value = searchParam;
-    }
-    
-    if (kategoriParam || searchParam) {
-        filterNews();
-    }
+    }).catch(err => {
+        console.error('Firebase error:', err);
+        // Fallback - render without Firebase data
+        renderNewsGrid([]);
+    });
     
     // Category tabs
     document.querySelectorAll('.category-tab').forEach(tab => {
@@ -220,12 +287,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Search functionality
+    // Search
     const searchInput = document.getElementById('searchBerita');
     const searchBtn = document.getElementById('btnSearchBerita');
     
     if (searchInput) {
-        // Search on button click
         if (searchBtn) {
             searchBtn.addEventListener('click', () => {
                 searchQuery = searchInput.value.trim();
@@ -234,7 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Search on Enter key
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 searchQuery = searchInput.value.trim();
@@ -243,7 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Clear search when input is empty
         searchInput.addEventListener('input', () => {
             if (searchInput.value === '') {
                 searchQuery = '';
@@ -264,5 +328,4 @@ function updateSearchUrl() {
     window.history.pushState({}, '', url);
 }
 
-// Make resetSearch global
 window.resetSearch = resetSearch;
