@@ -7114,3 +7114,409 @@ img {
 .reveal-delay-2 { transition-delay: 0.2s; }
 .reveal-delay-3 { transition-delay: 0.3s; }
 .reveal-delay-4 { transition-delay: 0.4s; }
+
+
+/* ===== Google Auth Styles ===== */
+.login-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-btn:hover {
+  background: var(--primary-dark);
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.user-btn:hover {
+  border-color: var(--primary);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  min-width: 250px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.user-dropdown.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-dropdown-header img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+}
+
+.user-dropdown-header strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+
+.user-dropdown-header small {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.user-dropdown-menu {
+  padding: 8px;
+}
+
+.user-dropdown-menu a,
+.user-dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--text-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.user-dropdown-menu a:hover,
+.user-dropdown-menu button:hover {
+  background: var(--bg-muted);
+}
+
+/* Login Modal */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.login-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.login-modal {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.login-modal-overlay.active .login-modal {
+  transform: scale(1);
+}
+
+.login-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-muted);
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.login-modal-content {
+  text-align: center;
+}
+
+.login-modal-content h2 {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.login-modal-content p {
+  color: var(--text-muted);
+  margin-bottom: 25px;
+}
+
+.google-signin-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* Dark Mode Auth */
+[data-theme="dark"] .user-btn {
+  background: #1a1a1a;
+  border-color: #333;
+}
+
+[data-theme="dark"] .user-name {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .user-dropdown {
+  background: #111;
+  border-color: #333;
+}
+
+[data-theme="dark"] .user-dropdown-header {
+  border-bottom-color: #333;
+}
+
+[data-theme="dark"] .user-dropdown-header strong {
+  color: #fff;
+}
+
+[data-theme="dark"] .user-dropdown-menu a,
+[data-theme="dark"] .user-dropdown-menu button {
+  color: #ccc;
+}
+
+[data-theme="dark"] .user-dropdown-menu a:hover,
+[data-theme="dark"] .user-dropdown-menu button:hover {
+  background: #222;
+}
+
+[data-theme="dark"] .login-modal {
+  background: #111;
+}
+
+[data-theme="dark"] .login-modal-content h2 {
+  color: #fff;
+}
+
+[data-theme="dark"] .login-modal-close {
+  background: #222;
+  color: #999;
+}
+
+/* Mobile Auth */
+@media (max-width: 768px) {
+  .user-name {
+    display: none;
+  }
+  
+  .user-btn {
+    padding: 4px;
+  }
+  
+  .login-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .login-btn svg {
+    display: none;
+  }
+  
+  .login-modal {
+    padding: 30px 20px;
+  }
+}
+
+
+/* ===== Login Required for Kirim Berita ===== */
+.kb-login-required {
+  text-align: center;
+  padding: 60px 30px;
+}
+
+.kb-login-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.kb-login-required h2 {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.kb-login-required p {
+  color: var(--text-muted);
+  margin-bottom: 25px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.kb-btn-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.kb-btn-login:hover {
+  background: var(--primary-dark);
+}
+
+[data-theme="dark"] .kb-login-required h2 {
+  color: #fff;
+}
+
+
+/* ===== Comment with Login ===== */
+.comment-login-prompt {
+  text-align: center;
+  padding: 25px;
+  background: var(--bg-muted);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.comment-login-prompt p {
+  margin-bottom: 12px;
+  color: var(--text-muted);
+}
+
+.btn-comment-login {
+  padding: 10px 20px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-comment-login:hover {
+  background: var(--primary-dark);
+}
+
+.comment-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.comment-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment-item-simple .comment-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.comment-item-simple .comment-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-item-simple .comment-name {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+}
+
+.comment-item-simple .comment-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Dark mode comment */
+[data-theme="dark"] .comment-login-prompt {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .comment-item-simple .comment-name {
+  color: #e0e0e0;
+}

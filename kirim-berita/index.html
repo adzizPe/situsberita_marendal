@@ -8,8 +8,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+    <!-- Google One Tap -->
+    <div id="g_id_onload"
+         data-client_id="830162422312-5h3nq1bohtktfhg4ksodt0jjsbeuria9.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -29,6 +37,8 @@
                             </svg>
                         </button>
                     </div>
+                    <!-- Auth Container -->
+                    <div id="authContainer"></div>
                     <button type="button" class="theme-toggle" id="themeToggle" title="Ganti Tema">
                         <span class="theme-icon light">☀️</span>
                         <span class="theme-icon dark">🌙</span>
@@ -252,6 +262,7 @@
     </footer>
 
     <script src="../js/main.js"></script>
+    <script src="../js/auth.js"></script>
     <script src="../js/kirim-berita.js"></script>
 </body>
 </html>

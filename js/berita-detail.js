@@ -69,14 +69,78 @@ if (sliderContainer) {
 }
 
 
-// ===== Comment System with localStorage =====
-const commentForm = document.getElementById('commentForm');
+// ===== Comment System with Login =====
 const commentList = document.getElementById('commentList');
-const commentNameInput = document.getElementById('commentName');
-const commentTextInput = document.getElementById('commentText');
+const commentFormContainer = document.getElementById('commentFormContainer');
 
 // Get article ID from URL path
 const articleId = window.location.pathname.replace(/\//g, '-').replace(/^-|-$/g, '') || 'default';
+
+// Initialize comment form based on login state
+function initCommentForm() {
+    if (!commentFormContainer) return;
+    
+    const savedUser = localStorage.getItem('googleUser');
+    
+    if (savedUser) {
+        const user = JSON.parse(savedUser);
+        commentFormContainer.innerHTML = `
+            <div class="comment-user-info">
+                <img src="${user.picture}" alt="${user.name}" class="comment-user-avatar">
+                <span>Berkomentar sebagai <strong>${user.name}</strong></span>
+            </div>
+            <form class="comment-form-simple" id="commentForm">
+                <textarea id="commentText" placeholder="Tulis komentar..." required></textarea>
+                <button type="submit">Kirim Komentar</button>
+            </form>
+        `;
+        
+        // Attach form handler
+        const form = document.getElementById('commentForm');
+        if (form) {
+            form.addEventListener('submit', handleCommentSubmit);
+        }
+    } else {
+        commentFormContainer.innerHTML = `
+            <div class="comment-login-prompt">
+                <p>🔐 Silakan login untuk berkomentar</p>
+                <button type="button" class="btn-comment-login" onclick="showLoginModal()">
+                    Login dengan Google
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Handle comment submit
+function handleCommentSubmit(e) {
+    e.preventDefault();
+    
+    const savedUser = localStorage.getItem('googleUser');
+    if (!savedUser) {
+        showLoginModal();
+        return;
+    }
+    
+    const user = JSON.parse(savedUser);
+    const textInput = document.getElementById('commentText');
+    const text = textInput.value.trim();
+    
+    if (!text) {
+        alert('Mohon isi komentar');
+        return;
+    }
+    
+    // Save and render
+    const comments = saveComment(user.name, user.picture, text);
+    renderComments(comments);
+    
+    // Clear form
+    textInput.value = '';
+    
+    // Scroll to comments
+    commentList.scrollIntoView({ behavior: 'smooth' });
+}
 
 // Load comments from localStorage
 function loadComments() {
@@ -85,12 +149,13 @@ function loadComments() {
 }
 
 // Save comment to localStorage
-function saveComment(name, text) {
+function saveComment(name, picture, text) {
     const comments = JSON.parse(localStorage.getItem(`comments_${articleId}`)) || [];
     
     const newComment = {
         id: Date.now(),
         name: name,
+        picture: picture,
         text: text,
         date: new Date().toLocaleString('id-ID', {
             day: 'numeric',
@@ -101,7 +166,7 @@ function saveComment(name, text) {
         })
     };
     
-    comments.unshift(newComment); // Add to beginning
+    comments.unshift(newComment);
     localStorage.setItem(`comments_${articleId}`, JSON.stringify(comments));
     
     return comments;
@@ -118,11 +183,15 @@ function renderComments(comments) {
     
     let html = '';
     comments.forEach(comment => {
+        const avatar = comment.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.name)}&background=2d8a4e&color=fff`;
         html += `
             <div class="comment-item-simple">
                 <div class="comment-header">
-                    <span class="comment-name">${escapeHtml(comment.name)}</span>
-                    <span class="comment-date">${comment.date}</span>
+                    <img src="${avatar}" alt="${escapeHtml(comment.name)}" class="comment-avatar">
+                    <div class="comment-meta">
+                        <span class="comment-name">${escapeHtml(comment.name)}</span>
+                        <span class="comment-date">${comment.date}</span>
+                    </div>
                 </div>
                 <p class="comment-text">${escapeHtml(comment.text)}</p>
             </div>
@@ -139,31 +208,8 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Handle form submit
-if (commentForm) {
-    commentForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const name = commentNameInput.value.trim();
-        const text = commentTextInput.value.trim();
-        
-        if (!name || !text) {
-            alert('Mohon isi nama dan komentar');
-            return;
-        }
-        
-        // Save and render
-        const comments = saveComment(name, text);
-        renderComments(comments);
-        
-        // Clear form
-        commentNameInput.value = '';
-        commentTextInput.value = '';
-        
-        // Scroll to comments
-        commentList.scrollIntoView({ behavior: 'smooth' });
-    });
-}
-
-// Load comments on page load
-document.addEventListener('DOMContentLoaded', loadComments);
+// Load comments and init form on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initCommentForm();
+    loadComments();
+});

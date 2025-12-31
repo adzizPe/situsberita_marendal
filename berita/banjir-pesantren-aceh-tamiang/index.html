@@ -8,8 +8,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+    <!-- Google One Tap -->
+    <div id="g_id_onload"
+         data-client_id="830162422312-5h3nq1bohtktfhg4ksodt0jjsbeuria9.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -29,6 +37,8 @@
                             </svg>
                         </button>
                     </div>
+                    <!-- Auth Container -->
+                    <div id="authContainer"></div>
                     <!-- Dark Mode Toggle -->
                     <button type="button" class="theme-toggle" id="themeToggle" title="Ganti Tema">
                         <span class="theme-icon light">☀️</span>
@@ -136,11 +146,10 @@
                     <section class="comment-section-simple">
                         <h3>Komentar</h3>
                         
-                        <form class="comment-form-simple" id="commentForm">
-                            <input type="text" id="commentName" placeholder="Nama Anda" required>
-                            <textarea id="commentText" placeholder="Tulis komentar..." required></textarea>
-                            <button type="submit">Kirim</button>
-                        </form>
+                        <!-- Login required for comment -->
+                        <div id="commentFormContainer">
+                            <!-- Will be populated by JS based on login state -->
+                        </div>
 
                         <div class="comment-list-simple" id="commentList">
                             <!-- Komentar akan muncul di sini -->
@@ -205,6 +214,7 @@
     </footer>
 
     <script src="../../js/main.js"></script>
+    <script src="../../js/auth.js"></script>
     <script src="../../js/berita-detail.js"></script>
 </body>
 </html>

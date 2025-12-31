@@ -1,12 +1,40 @@
 // Kirim Berita JavaScript - Support Multiple Images
 document.addEventListener('DOMContentLoaded', function() {
+    checkLoginForKirimBerita();
     initKirimBerita();
 });
 
 let uploadedImages = [];
 
+// Check if user is logged in
+function checkLoginForKirimBerita() {
+    const savedUser = localStorage.getItem('googleUser');
+    const formContainer = document.querySelector('.kb-form-container');
+    
+    if (!savedUser) {
+        // Show login required message
+        if (formContainer) {
+            formContainer.innerHTML = `
+                <div class="kb-login-required">
+                    <div class="kb-login-icon">🔐</div>
+                    <h2>Login Diperlukan</h2>
+                    <p>Untuk mengirim berita, silakan login terlebih dahulu dengan akun Google Anda.</p>
+                    <button type="button" class="kb-btn-login" onclick="showLoginModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Login dengan Google
+                    </button>
+                </div>
+            `;
+        }
+        return false;
+    }
+    return true;
+}
+
 function initKirimBerita() {
     const form = document.getElementById('submitNewsForm');
+    if (!form) return; // Form not available (user not logged in)
+    
     const uploadArea = document.getElementById('imageUploadArea');
     const fileInput = document.getElementById('gambarBerita');
     const uploadInner = document.getElementById('uploadPlaceholder');
@@ -17,6 +45,16 @@ function initKirimBerita() {
     const kontakInput = document.getElementById('kontakValue');
     const tanggalInput = document.getElementById('tanggalBerita');
     const waktuInput = document.getElementById('waktuBerita');
+    
+    // Auto-fill name from Google account
+    const savedUser = localStorage.getItem('googleUser');
+    if (savedUser) {
+        const user = JSON.parse(savedUser);
+        const namaPenerbit = document.getElementById('namaPenerbit');
+        if (namaPenerbit && !namaPenerbit.value) {
+            namaPenerbit.value = user.name;
+        }
+    }
 
     // Set tanggal dan waktu hari ini
     const now = new Date();
