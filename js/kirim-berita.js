@@ -93,22 +93,31 @@ function initKirimBerita() {
     function handleFiles(files) {
         Array.from(files).forEach(file => {
             if (uploadedImages.length >= 5) {
-                alert('Maksimal 5 foto.');
+                alert('Maksimal 5 file.');
                 return;
             }
             
-            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            if (!validTypes.includes(file.type)) {
-                alert('Format file tidak didukung. Gunakan JPG, PNG, WebP, atau GIF.');
+            // Accept images and videos
+            const validImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            const validVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'];
+            const isImage = validImageTypes.includes(file.type);
+            const isVideo = validVideoTypes.includes(file.type);
+            
+            if (!isImage && !isVideo) {
+                alert('Format file tidak didukung. Gunakan JPG, PNG, WebP, GIF, MP4, atau MOV.');
                 return;
             }
             
-            // No size limit - accept any size
+            // No size limit
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                const imageData = e.target.result;
-                uploadedImages.push(imageData);
+                const mediaData = {
+                    data: e.target.result,
+                    type: isVideo ? 'video' : 'image',
+                    name: file.name
+                };
+                uploadedImages.push(mediaData);
                 renderPreviews();
             };
             reader.readAsDataURL(file);
@@ -118,13 +127,21 @@ function initKirimBerita() {
     function renderPreviews() {
         if (uploadedImages.length > 0) {
             uploadInner.style.display = 'none';
-            previewContainer.innerHTML = uploadedImages.map((img, idx) => `
-                <div class="kb-preview-item">
-                    <img src="${img}" alt="Preview ${idx + 1}">
-                    <button type="button" class="kb-preview-remove" onclick="removeImage(${idx})">×</button>
-                    ${idx === 0 ? '<span class="kb-preview-main">Utama</span>' : ''}
-                </div>
-            `).join('') + `
+            previewContainer.innerHTML = uploadedImages.map((media, idx) => {
+                const isVideo = media.type === 'video';
+                const src = typeof media === 'string' ? media : media.data;
+                
+                return `
+                    <div class="kb-preview-item ${isVideo ? 'kb-preview-video' : ''}">
+                        ${isVideo ? 
+                            `<video src="${src}" muted></video><span class="kb-video-badge">▶ Video</span>` : 
+                            `<img src="${src}" alt="Preview ${idx + 1}">`
+                        }
+                        <button type="button" class="kb-preview-remove" onclick="removeImage(${idx})">×</button>
+                        ${idx === 0 ? '<span class="kb-preview-main">Utama</span>' : ''}
+                    </div>
+                `;
+            }).join('') + `
                 ${uploadedImages.length < 5 ? `
                     <div class="kb-preview-add" onclick="document.getElementById('gambarBerita').click()">
                         <span>+</span>
@@ -193,7 +210,8 @@ function initKirimBerita() {
             id: 'news_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
             judul: document.getElementById('judulBerita').value.trim(),
             penerbit: document.getElementById('namaPenerbit').value.trim(),
-            gambar: uploadedImages, // Array of images
+            gambar: uploadedImages.map(m => typeof m === 'string' ? m : m.data), // Array of media data
+            mediaTypes: uploadedImages.map(m => typeof m === 'string' ? 'image' : m.type), // Track types
             deskripsi: document.getElementById('deskripsiBerita').value.trim(),
             tanggal: document.getElementById('tanggalBerita').value,
             waktu: document.getElementById('waktuBerita').value,
