@@ -10,6 +10,80 @@ function isUserLoggedIn() {
     return localStorage.getItem('googleUser') !== null;
 }
 
+// Compress image to reduce size - more aggressive compression
+function compressImage(file, maxWidth = 800, quality = 0.6) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Resize if too large
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to compressed JPEG
+                const compressedData = canvas.toDataURL('image/jpeg', quality);
+                console.log('Compressed image size:', Math.round(compressedData.length / 1024), 'KB');
+                resolve(compressedData);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Process video - warn about size
+function processVideo(file) {
+    return new Promise((resolve, reject) => {
+        const sizeInMB = file.size / (1024 * 1024);
+        
+        // Reject video larger than 2MB for localStorage
+        if (sizeInMB > 2) {
+            reject(new Error(`Video terlalu besar (${sizeInMB.toFixed(1)}MB). Maksimal 2MB untuk video. Silakan compress video terlebih dahulu.`));
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            resolve(e.target.result);
+        };
+        reader.onerror = () => reject(new Error('Gagal membaca video'));
+        reader.readAsDataURL(file);
+    });
+}
+
+// Calculate approximate localStorage usage
+function getLocalStorageSize() {
+    let total = 0;
+    for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+            total += localStorage[key].length * 2; // UTF-16 = 2 bytes per char
+        }
+    }
+    return total;
+}
+
+// Check if data can fit in localStorage
+function canFitInLocalStorage(dataString) {
+    const currentSize = getLocalStorageSize();
+    const newDataSize = dataString.length * 2;
+    const maxSize = 5 * 1024 * 1024; // 5MB limit
+    
+    return (currentSize + newDataSize) < maxSize;
+}
+
 // Show login notification
 function showLoginNotification() {
     // Remove existing notification if any
@@ -124,8 +198,8 @@ function initKirimBerita() {
         fileInput.value = '';
     });
 
-    function handleFiles(files) {
-        Array.from(files).forEach(file => {
+    async function handleFiles(files) {
+        for (const file of Array.from(files)) {
             if (uploadedImages.length >= 5) {
                 alert('Maksimal 5 file.');
                 return;
@@ -139,21 +213,37 @@ function initKirimBerita() {
             
             if (!isImage && !isVideo) {
                 alert('Format file tidak didukung. Gunakan JPG, PNG, WebP, GIF, MP4, atau MOV.');
-                return;
+                continue;
             }
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const mediaData = {
-                    data: e.target.result,
-                    type: isVideo ? 'video' : 'image',
-                    name: file.name
-                };
+            try {
+                let mediaData;
+                
+                if (isImage) {
+                    // Compress image
+                    const compressedData = await compressImage(file);
+                    mediaData = {
+                        data: compressedData,
+                        type: 'image',
+                        name: file.name
+                    };
+                } else {
+                    // Process video - with size check
+                    const videoData = await processVideo(file);
+                    mediaData = {
+                        data: videoData,
+                        type: 'video',
+                        name: file.name
+                    };
+                }
+                
                 uploadedImages.push(mediaData);
                 renderPreviews();
-            };
-            reader.readAsDataURL(file);
-        });
+            } catch (err) {
+                console.error('Error processing file:', err);
+                alert(err.message || 'Gagal memproses file: ' + file.name);
+            }
+        }
     }
 
     function renderPreviews() {
@@ -228,13 +318,17 @@ function initKirimBerita() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         
+        console.log('Form submitted');
+        
         // Check login first
         if (!isUserLoggedIn()) {
+            console.log('User not logged in');
             showLoginNotification();
             return;
         }
         
         const user = JSON.parse(localStorage.getItem('googleUser'));
+        console.log('User:', user);
         
         if (uploadedImages.length === 0) {
             alert('Silakan upload minimal 1 foto/video berita.');
@@ -247,19 +341,32 @@ function initKirimBerita() {
             return;
         }
 
+        // Validate required fields
+        const judul = document.getElementById('judulBerita').value.trim();
+        const penerbit = document.getElementById('namaPenerbit').value.trim();
+        const deskripsi = document.getElementById('deskripsiBerita').value.trim();
+        const lokasi = document.getElementById('lokasiKejadian').value.trim();
+        const kategori = document.getElementById('kategoriBerita').value;
+        const kontakValue = document.getElementById('kontakValue').value.trim();
+        
+        if (!judul || !penerbit || !deskripsi || !lokasi || !kategori || !kontakValue) {
+            alert('Mohon lengkapi semua field yang wajib diisi.');
+            return;
+        }
+
         const data = {
             id: 'news_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-            judul: document.getElementById('judulBerita').value.trim(),
-            penerbit: document.getElementById('namaPenerbit').value.trim(),
+            judul: judul,
+            penerbit: penerbit,
             gambar: uploadedImages.map(m => typeof m === 'string' ? m : m.data),
             mediaTypes: uploadedImages.map(m => typeof m === 'string' ? 'image' : m.type),
-            deskripsi: document.getElementById('deskripsiBerita').value.trim(),
+            deskripsi: deskripsi,
             tanggal: document.getElementById('tanggalBerita').value,
             waktu: document.getElementById('waktuBerita').value,
-            lokasi: document.getElementById('lokasiKejadian').value.trim(),
-            kategori: document.getElementById('kategoriBerita').value,
+            lokasi: lokasi,
+            kategori: kategori,
             kontakType: document.querySelector('input[name="contactType"]:checked').value,
-            kontakValue: document.getElementById('kontakValue').value.trim(),
+            kontakValue: kontakValue,
             status: 'pending',
             submittedAt: new Date().toISOString(),
             submittedBy: {
@@ -270,10 +377,40 @@ function initKirimBerita() {
             }
         };
 
-        // Simpan ke localStorage
-        let submissions = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
-        submissions.unshift(data);
-        localStorage.setItem('newsSubmissions', JSON.stringify(submissions));
+        console.log('Data to save:', data);
+
+        // Simpan ke localStorage dengan pengecekan ukuran
+        try {
+            let submissions = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
+            submissions.unshift(data);
+            
+            const dataString = JSON.stringify(submissions);
+            
+            // Check if data can fit
+            if (!canFitInLocalStorage(dataString)) {
+                alert('Penyimpanan penuh! Silakan gunakan gambar yang lebih kecil atau hapus beberapa berita lama di admin.');
+                return;
+            }
+            
+            localStorage.setItem('newsSubmissions', dataString);
+            console.log('Data saved successfully');
+            
+            // Verify data was saved
+            const saved = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
+            if (!saved.find(n => n.id === data.id)) {
+                throw new Error('Data tidak tersimpan dengan benar');
+            }
+            
+        } catch (err) {
+            console.error('Error saving data:', err);
+            
+            if (err.name === 'QuotaExceededError' || err.message.includes('quota')) {
+                alert('Penyimpanan penuh! Gambar/video terlalu besar. Coba:\n1. Gunakan gambar yang lebih kecil\n2. Jangan upload video\n3. Hapus berita lama di admin');
+            } else {
+                alert('Gagal menyimpan berita: ' + err.message);
+            }
+            return;
+        }
 
         // Tampilkan modal sukses
         document.getElementById('successModal').classList.add('active');

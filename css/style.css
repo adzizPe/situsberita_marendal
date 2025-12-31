@@ -973,7 +973,8 @@ img {
   }
 
   .header-right {
-    gap: 10px;
+    gap: 8px;
+    overflow: visible;
   }
   
   .date-time {
@@ -981,12 +982,17 @@ img {
   }
 
   .search-box {
-    padding: 6px 10px;
+    padding: 5px 8px;
+    flex-shrink: 1;
   }
   
   .search-box input {
-    width: 100px;
+    width: 80px;
     font-size: 13px;
+  }
+  
+  .theme-toggle {
+    flex-shrink: 0;
   }
 
   /* Navbar Mobile - Horizontal scroll */
@@ -1195,11 +1201,29 @@ img {
 /* Small Mobile */
 @media (max-width: 400px) {
   .logo-text {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+  }
+
+  .header-right {
+    gap: 5px;
+  }
+
+  .search-box {
+    padding: 4px 6px;
   }
 
   .search-box input {
-    width: 80px;
+    width: 60px;
+    font-size: 12px;
+  }
+  
+  .theme-toggle {
+    width: 36px;
+    height: 22px;
+  }
+  
+  .theme-icon {
+    font-size: 0.75rem;
   }
   
   .nav-item > a {
@@ -8020,7 +8044,8 @@ img, video, iframe, embed, object {
   /* Fix header overflow */
   .header-right {
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 6px;
+    overflow: visible;
   }
   
   .search-box {
@@ -8029,7 +8054,13 @@ img, video, iframe, embed, object {
   }
   
   .search-box input {
-    width: 80px;
+    width: 70px;
+  }
+  
+  /* Theme toggle always visible */
+  .theme-toggle {
+    flex-shrink: 0;
+    margin-right: 0;
   }
 }
 
@@ -8045,6 +8076,15 @@ img, video, iframe, embed, object {
   .kb-submit {
     padding-left: 12px;
     padding-right: 12px;
+  }
+  
+  /* Hide login text, show only icon */
+  .login-btn-google span {
+    display: none;
+  }
+  
+  .login-btn-google {
+    padding: 6px 10px;
   }
   
   .kb-header h1 {

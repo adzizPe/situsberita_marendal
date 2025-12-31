@@ -35,6 +35,7 @@ function initializeGoogleButton() {
         callback: handleCredentialResponse
     });
     
+    
     googleInitialized = true;
 }
 
