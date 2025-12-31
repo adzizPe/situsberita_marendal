@@ -7726,3 +7726,12 @@ img {
     border-top: 1px dashed var(--border);
   }
 }
+
+
+/* ===== Login Note ===== */
+.kb-login-note {
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

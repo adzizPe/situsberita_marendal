@@ -1,18 +1,20 @@
 // Kirim Berita JavaScript - Support Multiple Images
 document.addEventListener('DOMContentLoaded', function() {
-    checkLoginForKirimBerita();
-    initKirimBerita();
+    const isLoggedIn = checkLoginForKirimBerita();
+    if (isLoggedIn) {
+        initKirimBerita();
+    }
 });
 
 let uploadedImages = [];
 
-// Check if user is logged in
+// Check if user is logged in - REQUIRED for kirim berita
 function checkLoginForKirimBerita() {
     const savedUser = localStorage.getItem('googleUser');
     const formContainer = document.querySelector('.kb-form-container');
     
     if (!savedUser) {
-        // Show login required message
+        // Show login required message - block access
         if (formContainer) {
             formContainer.innerHTML = `
                 <div class="kb-login-required">
@@ -22,6 +24,7 @@ function checkLoginForKirimBerita() {
                     <button type="button" class="kb-btn-login" onclick="showLoginModal()">
                         Login dengan Google
                     </button>
+                    <p class="kb-login-note">Dengan login, berita Anda akan terverifikasi dan lebih dipercaya.</p>
                 </div>
             `;
         }
@@ -94,15 +97,13 @@ function initKirimBerita() {
                 return;
             }
             
-            const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
             if (!validTypes.includes(file.type)) {
-                alert('Format file tidak didukung. Gunakan JPG, PNG, atau WebP.');
+                alert('Format file tidak didukung. Gunakan JPG, PNG, WebP, atau GIF.');
                 return;
             }
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Ukuran file terlalu besar. Maksimal 5MB per foto.');
-                return;
-            }
+            
+            // No size limit - accept any size
 
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -167,6 +168,16 @@ function initKirimBerita() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         
+        // Double check login
+        const savedUser = localStorage.getItem('googleUser');
+        if (!savedUser) {
+            alert('Silakan login terlebih dahulu.');
+            showLoginModal();
+            return;
+        }
+        
+        const user = JSON.parse(savedUser);
+        
         if (uploadedImages.length === 0) {
             alert('Silakan upload minimal 1 foto berita.');
             return;
@@ -191,7 +202,14 @@ function initKirimBerita() {
             kontakType: document.querySelector('input[name="contactType"]:checked').value,
             kontakValue: document.getElementById('kontakValue').value.trim(),
             status: 'pending',
-            submittedAt: new Date().toISOString()
+            submittedAt: new Date().toISOString(),
+            // User info from Google login
+            submittedBy: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                picture: user.picture
+            }
         };
 
         // Simpan ke localStorage
