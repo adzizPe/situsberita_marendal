@@ -7586,3 +7586,16 @@ img {
 [data-theme="dark"] .comment-item-simple .comment-name {
   color: #e0e0e0;
 }
+
+
+/* ===== Loading Comments ===== */
+.loading-comments {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.loading-comments::before {
+  content: '⏳ ';
+}

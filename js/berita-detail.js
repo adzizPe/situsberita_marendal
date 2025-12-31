@@ -5,7 +5,6 @@ function changeMainImage(thumb, src) {
         mainImage.src = src;
     }
     
-    // Update active state
     document.querySelectorAll('.gallery-thumb').forEach(t => {
         t.classList.remove('active');
     });
@@ -42,7 +41,6 @@ function goToSlide(index) {
     showSlide(currentSlide);
 }
 
-// Auto slide every 5 seconds
 if (slides.length > 0) {
     setInterval(() => {
         changeSlide(1);
@@ -68,13 +66,9 @@ if (sliderContainer) {
     });
 }
 
-
-// ===== Comment System with Login =====
+// ===== Comment System with Firebase =====
 const commentList = document.getElementById('commentList');
 const commentFormContainer = document.getElementById('commentFormContainer');
-
-// Get article ID from URL path
-const articleId = window.location.pathname.replace(/\//g, '-').replace(/^-|-$/g, '') || 'default';
 
 // Initialize comment form based on login state
 function initCommentForm() {
@@ -95,7 +89,6 @@ function initCommentForm() {
             </form>
         `;
         
-        // Attach form handler
         const form = document.getElementById('commentForm');
         if (form) {
             form.addEventListener('submit', handleCommentSubmit);
@@ -113,7 +106,7 @@ function initCommentForm() {
 }
 
 // Handle comment submit
-function handleCommentSubmit(e) {
+async function handleCommentSubmit(e) {
     e.preventDefault();
     
     const savedUser = localStorage.getItem('googleUser');
@@ -131,45 +124,30 @@ function handleCommentSubmit(e) {
         return;
     }
     
-    // Save and render
-    const comments = saveComment(user.name, user.picture, text);
-    renderComments(comments);
+    // Disable button while submitting
+    const submitBtn = document.querySelector('#commentForm button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Mengirim...';
+    }
     
-    // Clear form
-    textInput.value = '';
-    
-    // Scroll to comments
-    commentList.scrollIntoView({ behavior: 'smooth' });
-}
-
-// Load comments from localStorage
-function loadComments() {
-    const comments = JSON.parse(localStorage.getItem(`comments_${articleId}`)) || [];
-    renderComments(comments);
-}
-
-// Save comment to localStorage
-function saveComment(name, picture, text) {
-    const comments = JSON.parse(localStorage.getItem(`comments_${articleId}`)) || [];
-    
-    const newComment = {
-        id: Date.now(),
-        name: name,
-        picture: picture,
-        text: text,
-        date: new Date().toLocaleString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    };
-    
-    comments.unshift(newComment);
-    localStorage.setItem(`comments_${articleId}`, JSON.stringify(comments));
-    
-    return comments;
+    try {
+        // Save to Firebase
+        if (window.firebaseComments) {
+            await window.firebaseComments.save(user.name, user.picture, text);
+        }
+        
+        // Clear form
+        textInput.value = '';
+    } catch (error) {
+        console.error('Error saving comment:', error);
+        alert('Gagal mengirim komentar. Coba lagi.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Kirim Komentar';
+        }
+    }
 }
 
 // Render comments to DOM
@@ -208,8 +186,31 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Load comments and init form on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize comments
+function initComments() {
     initCommentForm();
-    loadComments();
-});
+    
+    // Show loading
+    if (commentList) {
+        commentList.innerHTML = '<p class="loading-comments">Memuat komentar...</p>';
+    }
+    
+    // Listen to Firebase comments (realtime)
+    if (window.firebaseComments) {
+        window.firebaseComments.listen(renderComments);
+    } else {
+        // Retry after Firebase loads
+        setTimeout(() => {
+            if (window.firebaseComments) {
+                window.firebaseComments.listen(renderComments);
+            } else {
+                if (commentList) {
+                    commentList.innerHTML = '<p class="no-comments">Belum ada komentar.</p>';
+                }
+            }
+        }, 2000);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initComments);
