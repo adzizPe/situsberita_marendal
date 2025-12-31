@@ -197,8 +197,12 @@ function viewDetail(id) {
     const news = data.find(n => n.id === id);
     if (!news) return;
     
-    // Handle images - support both single and array
-    const images = Array.isArray(news.gambar) ? news.gambar : [news.gambar];
+    // Handle images/videos - support both single and array
+    const media = Array.isArray(news.gambar) ? news.gambar : [news.gambar];
+    const mediaTypes = news.mediaTypes || media.map(() => 'image');
+    
+    // User info from Google
+    const submitter = news.submittedBy || {};
     
     document.getElementById('modalBody').innerHTML = `
         <div class="adm-detail-header">
@@ -208,22 +212,43 @@ function viewDetail(id) {
         
         <div class="adm-detail-gallery">
             <div class="adm-gallery-main">
-                <img src="${images[0]}" alt="" id="detailMainImg">
+                ${mediaTypes[0] === 'video' ? 
+                    `<video src="${media[0]}" controls id="detailMainMedia"></video>` :
+                    `<img src="${media[0]}" alt="" id="detailMainMedia">`
+                }
             </div>
-            ${images.length > 1 ? `
+            ${media.length > 1 ? `
                 <div class="adm-gallery-thumbs">
-                    ${images.map((img, idx) => `
-                        <div class="adm-gallery-thumb ${idx === 0 ? 'active' : ''}" onclick="changeDetailImage('${img}', this)">
-                            <img src="${img}" alt="Foto ${idx + 1}">
+                    ${media.map((m, idx) => `
+                        <div class="adm-gallery-thumb ${idx === 0 ? 'active' : ''}" onclick="changeDetailMedia('${m}', '${mediaTypes[idx]}', this)">
+                            ${mediaTypes[idx] === 'video' ? 
+                                `<video src="${m}" muted></video><span class="adm-video-badge">▶</span>` :
+                                `<img src="${m}" alt="Media ${idx + 1}">`
+                            }
                         </div>
                     `).join('')}
                 </div>
             ` : ''}
         </div>
         
+        ${submitter.id ? `
+        <div class="adm-detail-user">
+            <div class="adm-detail-user-header">
+                <span>👤 Akun Google Pengirim</span>
+            </div>
+            <div class="adm-detail-user-info">
+                <img src="${submitter.picture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(submitter.name || 'User')}" alt="">
+                <div>
+                    <strong>${escapeHtml(submitter.name || '-')}</strong>
+                    <small>${escapeHtml(submitter.email || '-')}</small>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+        
         <div class="adm-detail-info">
             <div class="adm-detail-row">
-                <span class="adm-detail-label">Pengirim</span>
+                <span class="adm-detail-label">Nama Penerbit</span>
                 <span class="adm-detail-value">${escapeHtml(news.penerbit)}</span>
             </div>
             <div class="adm-detail-row">
@@ -265,9 +290,21 @@ function viewDetail(id) {
     document.getElementById('detailModal').classList.add('active');
 }
 
-// Change image in detail modal
+// Change media in detail modal (support image & video)
+window.changeDetailMedia = function(src, type, thumb) {
+    const container = document.querySelector('.adm-gallery-main');
+    if (type === 'video') {
+        container.innerHTML = `<video src="${src}" controls id="detailMainMedia"></video>`;
+    } else {
+        container.innerHTML = `<img src="${src}" alt="" id="detailMainMedia">`;
+    }
+    document.querySelectorAll('.adm-gallery-thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+};
+
+// Legacy support
 window.changeDetailImage = function(src, thumb) {
-    document.getElementById('detailMainImg').src = src;
+    document.getElementById('detailMainMedia').src = src;
     document.querySelectorAll('.adm-gallery-thumb').forEach(t => t.classList.remove('active'));
     thumb.classList.add('active');
 };
