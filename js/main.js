@@ -272,6 +272,35 @@ function copyLink() {
     });
 }
 
+// ===== Scroll Reveal Animation =====
+function initScrollReveal() {
+    const revealElements = document.querySelectorAll('.reveal');
+    
+    if (revealElements.length === 0) return;
+    
+    const revealOnScroll = () => {
+        revealElements.forEach(el => {
+            const elementTop = el.getBoundingClientRect().top;
+            const elementBottom = el.getBoundingClientRect().bottom;
+            const windowHeight = window.innerHeight;
+            
+            // Element masuk viewport
+            if (elementTop < windowHeight - 80 && elementBottom > 80) {
+                el.classList.add('active');
+            } else {
+                // Element keluar viewport - reset untuk efek berulang
+                el.classList.remove('active');
+            }
+        });
+    };
+    
+    // Initial check
+    revealOnScroll();
+    
+    // On scroll
+    window.addEventListener('scroll', revealOnScroll, { passive: true });
+}
+
 // ===== Page Loader =====
 function hidePageLoader() {
     const loader = document.getElementById('pageLoader');
@@ -294,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSmoothScroll();
     initThemeToggle();
     initSorotanSlider();
+    initScrollReveal();
 });
 
 // Hide loader when page fully loaded
