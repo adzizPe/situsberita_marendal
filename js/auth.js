@@ -52,6 +52,18 @@ function handleCredentialResponse(response) {
     // Save to localStorage
     localStorage.setItem('googleUser', JSON.stringify(currentUser));
     
+    // Save to Firebase (for tracking)
+    if (window.firebaseUsers) {
+        window.firebaseUsers.save(currentUser);
+    } else {
+        // Retry after Firebase loads
+        setTimeout(() => {
+            if (window.firebaseUsers) {
+                window.firebaseUsers.save(currentUser);
+            }
+        }, 1000);
+    }
+    
     updateAuthUI();
     
     // Close login modal if open

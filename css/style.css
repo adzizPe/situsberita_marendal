@@ -7599,3 +7599,130 @@ img {
 .loading-comments::before {
   content: '⏳ ';
 }
+
+
+/* ===== Admin Users Section ===== */
+.adm-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.adm-section-header h3 {
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+
+.adm-user-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.adm-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adm-user-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+
+.adm-user-card:hover {
+  border-color: var(--primary);
+}
+
+.adm-user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.adm-user-info {
+  flex: 1;
+}
+
+.adm-user-info strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 2px;
+}
+
+.adm-user-info small {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.adm-user-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.adm-empty-users {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+.adm-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+/* Dark mode admin users */
+[data-theme="dark"] .adm-section-header h3 {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .adm-user-card {
+  background: #111;
+  border-color: #333;
+}
+
+[data-theme="dark"] .adm-user-card:hover {
+  border-color: #4ade80;
+}
+
+[data-theme="dark"] .adm-user-info strong {
+  color: #e0e0e0;
+}
+
+/* Mobile admin users */
+@media (max-width: 768px) {
+  .adm-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .adm-user-card {
+    flex-wrap: wrap;
+  }
+  
+  .adm-user-stats {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 15px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+}

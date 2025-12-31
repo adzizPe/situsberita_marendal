@@ -38,6 +38,7 @@ function showDashboard() {
     document.getElementById('adminDashboard').classList.add('active');
     loadNews();
     updateStats();
+    loadUsers();
 }
 
 function initDashboard() {
@@ -53,6 +54,71 @@ function initDashboard() {
             filterNews(btn.dataset.filter);
         });
     });
+}
+
+// Section switching
+function showSection(section) {
+    // Update nav
+    document.querySelectorAll('.adm-nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.section === section) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Update topbar title
+    const topbarTitle = document.querySelector('.adm-topbar h2');
+    
+    if (section === 'news') {
+        document.querySelector('.adm-content:not(.adm-section)').style.display = 'block';
+        document.getElementById('usersSection').style.display = 'none';
+        if (topbarTitle) topbarTitle.textContent = 'Berita Masuk';
+    } else if (section === 'users') {
+        document.querySelector('.adm-content:not(.adm-section)').style.display = 'none';
+        document.getElementById('usersSection').style.display = 'block';
+        if (topbarTitle) topbarTitle.textContent = 'Users Login';
+    }
+}
+
+// Make showSection global
+window.showSection = showSection;
+
+// Load users from Firebase
+function loadUsers() {
+    const usersList = document.getElementById('usersList');
+    const totalUsers = document.getElementById('totalUsers');
+    
+    // Wait for Firebase to load
+    const checkFirebase = () => {
+        if (window.firebaseUsers) {
+            window.firebaseUsers.getAll((users) => {
+                if (totalUsers) totalUsers.textContent = users.length;
+                
+                if (users.length === 0) {
+                    usersList.innerHTML = '<p class="adm-empty-users">Belum ada user yang login</p>';
+                    return;
+                }
+                
+                usersList.innerHTML = users.map(user => `
+                    <div class="adm-user-card">
+                        <img src="${user.picture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name)}" alt="${user.name}" class="adm-user-avatar">
+                        <div class="adm-user-info">
+                            <strong>${escapeHtml(user.name)}</strong>
+                            <small>${escapeHtml(user.email)}</small>
+                        </div>
+                        <div class="adm-user-stats">
+                            <span title="Login count">🔑 ${user.loginCount || 1}x</span>
+                            <span title="Last login">🕐 ${formatDateTime(user.lastLogin)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        } else {
+            setTimeout(checkFirebase, 500);
+        }
+    };
+    
+    checkFirebase();
 }
 
 function loadNews() {
