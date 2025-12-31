@@ -1,11 +1,13 @@
-// Admin Portal JavaScript
+// Admin Portal JavaScript - Firebase Version
 document.addEventListener('DOMContentLoaded', function() {
     checkSession();
     initLogin();
     initDashboard();
 });
 
-const ADMIN = { username: 'admin', password: 'marendal2025' };
+const ADMIN = { username: 'adminsiapaaja', password: 'adminsiapaaja' };
+
+let allNewsData = []; // Store all news from Firebase
 
 function checkSession() {
     if (sessionStorage.getItem('adminLoggedIn') === 'true') {
@@ -37,7 +39,6 @@ function showDashboard() {
     document.getElementById('loginSection').style.display = 'none';
     document.getElementById('adminDashboard').classList.add('active');
     loadNews();
-    updateStats();
     loadUsers();
 }
 
@@ -58,7 +59,6 @@ function initDashboard() {
 
 // Section switching
 function showSection(section) {
-    // Update nav
     document.querySelectorAll('.adm-nav-item').forEach(item => {
         item.classList.remove('active');
         if (item.dataset.section === section) {
@@ -66,7 +66,6 @@ function showSection(section) {
         }
     });
     
-    // Update topbar title
     const topbarTitle = document.querySelector('.adm-topbar h2');
     
     if (section === 'news') {
@@ -80,7 +79,6 @@ function showSection(section) {
     }
 }
 
-// Make showSection global
 window.showSection = showSection;
 
 // Load users from Firebase
@@ -88,7 +86,6 @@ function loadUsers() {
     const usersList = document.getElementById('usersList');
     const totalUsers = document.getElementById('totalUsers');
     
-    // Wait for Firebase to load
     const checkFirebase = () => {
         if (window.firebaseUsers) {
             window.firebaseUsers.getAll((users) => {
@@ -121,12 +118,31 @@ function loadUsers() {
     checkFirebase();
 }
 
+// Load news from Firebase
 function loadNews() {
-    const data = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
-    renderNews(data, 'pending');
+    const container = document.getElementById('adminNewsList');
+    container.innerHTML = '<p style="text-align:center;padding:40px;color:#888;">Memuat data...</p>';
+    
+    const checkFirebase = () => {
+        if (window.firebaseNews) {
+            window.firebaseNews.init().then(() => {
+                window.firebaseNews.getAll((news) => {
+                    allNewsData = news;
+                    updateStats();
+                    renderNews(news, 'pending');
+                });
+            }).catch(err => {
+                console.error('Firebase init error:', err);
+                container.innerHTML = '<p style="text-align:center;padding:40px;color:#c00;">Gagal memuat data. Refresh halaman.</p>';
+            });
+        } else {
+            setTimeout(checkFirebase, 500);
+        }
+    };
+    
+    checkFirebase();
 }
 
-// Get thumbnail - support both single image and array
 function getThumbnail(gambar) {
     if (Array.isArray(gambar)) {
         return gambar[0] || 'https://placehold.co/100x80/eee/999?text=No+Image';
@@ -152,8 +168,8 @@ function renderNews(data, filter = 'pending') {
     container.innerHTML = filtered.map(news => `
         <div class="adm-news-item" data-id="${news.id}">
             <div class="adm-news-thumb">
-                <img src="${getThumbnail(news.gambar)}" alt="">
-                ${Array.isArray(news.gambar) && news.gambar.length > 1 ? `<span class="adm-thumb-count">${news.gambar.length} foto</span>` : ''}
+                <img src="${getThumbnail(news.gambar)}" alt="" onerror="this.src='https://placehold.co/100x80/eee/999?text=Error'">
+                ${Array.isArray(news.gambar) && news.gambar.length > 1 ? `<span class="adm-thumb-count">${news.gambar.length} file</span>` : ''}
             </div>
             <div class="adm-news-info">
                 <span class="adm-news-status ${news.status}">${statusLabel(news.status)}</span>
@@ -161,9 +177,9 @@ function renderNews(data, filter = 'pending') {
                 <div class="adm-news-meta">
                     <span>👤 ${escapeHtml(news.penerbit)}</span>
                     <span>📍 ${escapeHtml(news.lokasi)}</span>
-                    <span>📅 Kejadian: ${formatDate(news.tanggal)}</span>
+                    <span>📅 ${formatDate(news.tanggal)}</span>
                 </div>
-                <p class="adm-news-excerpt">${escapeHtml(news.deskripsi.substring(0, 100))}...</p>
+                <p class="adm-news-excerpt">${escapeHtml((news.deskripsi || '').substring(0, 100))}...</p>
                 <div class="adm-news-submitted">
                     <small>📩 Dikirim: ${formatDateTime(news.submittedAt)}</small>
                 </div>
@@ -181,27 +197,21 @@ function renderNews(data, filter = 'pending') {
 }
 
 function filterNews(filter) {
-    const data = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
-    renderNews(data, filter);
+    renderNews(allNewsData, filter);
 }
 
 function updateStats() {
-    const data = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
-    document.getElementById('pendingCount').textContent = data.filter(n => n.status === 'pending').length;
-    document.getElementById('approvedCount').textContent = data.filter(n => n.status === 'approved').length;
-    document.getElementById('rejectedCount').textContent = data.filter(n => n.status === 'rejected').length;
+    document.getElementById('pendingCount').textContent = allNewsData.filter(n => n.status === 'pending').length;
+    document.getElementById('approvedCount').textContent = allNewsData.filter(n => n.status === 'approved').length;
+    document.getElementById('rejectedCount').textContent = allNewsData.filter(n => n.status === 'rejected').length;
 }
 
 function viewDetail(id) {
-    const data = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
-    const news = data.find(n => n.id === id);
+    const news = allNewsData.find(n => n.id === id);
     if (!news) return;
     
-    // Handle images/videos - support both single and array
     const media = Array.isArray(news.gambar) ? news.gambar : [news.gambar];
     const mediaTypes = news.mediaTypes || media.map(() => 'image');
-    
-    // User info from Google
     const submitter = news.submittedBy || {};
     
     document.getElementById('modalBody').innerHTML = `
@@ -214,7 +224,7 @@ function viewDetail(id) {
             <div class="adm-gallery-main">
                 ${mediaTypes[0] === 'video' ? 
                     `<video src="${media[0]}" controls id="detailMainMedia"></video>` :
-                    `<img src="${media[0]}" alt="" id="detailMainMedia">`
+                    `<img src="${media[0]}" alt="" id="detailMainMedia" onerror="this.src='https://placehold.co/400x300/eee/999?text=Error'">`
                 }
             </div>
             ${media.length > 1 ? `
@@ -257,7 +267,7 @@ function viewDetail(id) {
             </div>
             <div class="adm-detail-row">
                 <span class="adm-detail-label">Waktu Kejadian</span>
-                <span class="adm-detail-value">${formatDate(news.tanggal)} ${news.waktu}</span>
+                <span class="adm-detail-value">${formatDate(news.tanggal)} ${news.waktu || ''}</span>
             </div>
             <div class="adm-detail-row">
                 <span class="adm-detail-label">Waktu Dikirim</span>
@@ -275,7 +285,7 @@ function viewDetail(id) {
         
         <div class="adm-detail-content">
             <h4>Isi Berita:</h4>
-            <p>${escapeHtml(news.deskripsi).replace(/\n/g, '<br>')}</p>
+            <p>${escapeHtml(news.deskripsi || '').replace(/\n/g, '<br>')}</p>
         </div>
         
         <div class="adm-detail-actions">
@@ -290,7 +300,6 @@ function viewDetail(id) {
     document.getElementById('detailModal').classList.add('active');
 }
 
-// Change media in detail modal (support image & video)
 window.changeDetailMedia = function(src, type, thumb) {
     const container = document.querySelector('.adm-gallery-main');
     if (type === 'video') {
@@ -298,13 +307,6 @@ window.changeDetailMedia = function(src, type, thumb) {
     } else {
         container.innerHTML = `<img src="${src}" alt="" id="detailMainMedia">`;
     }
-    document.querySelectorAll('.adm-gallery-thumb').forEach(t => t.classList.remove('active'));
-    thumb.classList.add('active');
-};
-
-// Legacy support
-window.changeDetailImage = function(src, thumb) {
-    document.getElementById('detailMainMedia').src = src;
     document.querySelectorAll('.adm-gallery-thumb').forEach(t => t.classList.remove('active'));
     thumb.classList.add('active');
 };
@@ -348,76 +350,25 @@ function closeConfirmModal() {
     pendingAction = null;
 }
 
-function executeAction() {
+async function executeAction() {
     if (!pendingAction) return;
     
-    let data = JSON.parse(localStorage.getItem('newsSubmissions') || '[]');
-    const idx = data.findIndex(n => n.id === pendingAction.id);
+    const { id, action } = pendingAction;
     
-    if (idx !== -1) {
-        if (pendingAction.action === 'delete') {
-            // Hapus dari submissions
-            const newsId = data[idx].id;
-            data.splice(idx, 1);
-            localStorage.setItem('newsSubmissions', JSON.stringify(data));
-            
-            // Hapus juga dari published jika ada
-            let published = JSON.parse(localStorage.getItem('publishedNews') || '[]');
-            published = published.filter(n => n.id !== newsId);
-            localStorage.setItem('publishedNews', JSON.stringify(published));
-            
-        } else if (pendingAction.action === 'approve') {
-            data[idx].status = 'approved';
-            data[idx].reviewedAt = new Date().toISOString();
-            localStorage.setItem('newsSubmissions', JSON.stringify(data));
-            publishNews(data[idx]);
-            
-        } else if (pendingAction.action === 'reject') {
-            data[idx].status = 'rejected';
-            data[idx].reviewedAt = new Date().toISOString();
-            localStorage.setItem('newsSubmissions', JSON.stringify(data));
-            
-            // Hapus dari published jika sebelumnya sudah dipublish
-            let published = JSON.parse(localStorage.getItem('publishedNews') || '[]');
-            published = published.filter(n => n.id !== data[idx].id);
-            localStorage.setItem('publishedNews', JSON.stringify(published));
+    try {
+        if (action === 'delete') {
+            await window.firebaseNews.delete(id);
+        } else if (action === 'approve') {
+            await window.firebaseNews.updateStatus(id, 'approved');
+        } else if (action === 'reject') {
+            await window.firebaseNews.updateStatus(id, 'rejected');
         }
+    } catch (err) {
+        console.error('Action error:', err);
+        alert('Gagal melakukan aksi: ' + err.message);
     }
     
     closeConfirmModal();
-    
-    const activeFilter = document.querySelector('.adm-filter-btn.active');
-    filterNews(activeFilter.dataset.filter);
-    updateStats();
-}
-
-// Publish news to public list
-function publishNews(news) {
-    let published = JSON.parse(localStorage.getItem('publishedNews') || '[]');
-    
-    // Cek apakah sudah ada, jika ada update saja
-    const existingIdx = published.findIndex(n => n.id === news.id);
-    
-    const publishedNews = {
-        id: news.id,
-        judul: news.judul,
-        penerbit: news.penerbit,
-        gambar: news.gambar,
-        deskripsi: news.deskripsi,
-        tanggal: news.tanggal,
-        waktu: news.waktu,
-        lokasi: news.lokasi,
-        kategori: news.kategori,
-        publishedAt: new Date().toISOString()
-    };
-    
-    if (existingIdx !== -1) {
-        published[existingIdx] = publishedNews;
-    } else {
-        published.unshift(publishedNews);
-    }
-    
-    localStorage.setItem('publishedNews', JSON.stringify(published));
 }
 
 // Helpers
@@ -449,14 +400,12 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Close modal on overlay click
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('adm-modal-overlay')) {
         e.target.classList.remove('active');
     }
 });
 
-// Make functions global
 window.viewDetail = viewDetail;
 window.closeDetailModal = closeDetailModal;
 window.confirmAction = confirmAction;
