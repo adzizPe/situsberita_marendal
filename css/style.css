@@ -7757,3 +7757,130 @@ img {
   font-weight: 600;
   pointer-events: none;
 }
+
+
+/* ===== Login Notification Toast ===== */
+.login-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  z-index: 999999;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.login-notification.active {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.login-notif-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  border-left: 4px solid var(--primary);
+  max-width: 500px;
+}
+
+.login-notif-icon {
+  font-size: 1.8rem;
+}
+
+.login-notif-text {
+  flex: 1;
+}
+
+.login-notif-text strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 2px;
+}
+
+.login-notif-text p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.login-notif-btn {
+  padding: 8px 16px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.login-notif-btn:hover {
+  background: var(--primary-dark);
+}
+
+.login-notif-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+}
+
+.login-notif-close:hover {
+  color: var(--text-dark);
+}
+
+/* Dark mode notification */
+[data-theme="dark"] .login-notif-content {
+  background: #1a1a1a;
+  border-left-color: #4ade80;
+}
+
+[data-theme="dark"] .login-notif-text strong {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .login-notif-btn {
+  background: #4ade80;
+  color: #000;
+}
+
+/* Mobile notification */
+@media (max-width: 768px) {
+  .login-notification {
+    left: 10px;
+    right: 10px;
+    transform: translateX(0) translateY(-100px);
+  }
+  
+  .login-notification.active {
+    transform: translateX(0) translateY(0);
+  }
+  
+  .login-notif-content {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 15px;
+  }
+  
+  .login-notif-btn {
+    width: 100%;
+    text-align: center;
+    order: 3;
+  }
+  
+  .login-notif-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+}

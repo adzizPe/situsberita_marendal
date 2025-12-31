@@ -1,41 +1,57 @@
-// Kirim Berita JavaScript - Support Multiple Images
+// Kirim Berita JavaScript - Support Multiple Images & Videos
 document.addEventListener('DOMContentLoaded', function() {
-    const isLoggedIn = checkLoginForKirimBerita();
-    if (isLoggedIn) {
-        initKirimBerita();
-    }
+    initKirimBerita();
 });
 
 let uploadedImages = [];
 
-// Check if user is logged in - REQUIRED for kirim berita
-function checkLoginForKirimBerita() {
-    const savedUser = localStorage.getItem('googleUser');
-    const formContainer = document.querySelector('.kb-form-container');
+// Check if user is logged in
+function isUserLoggedIn() {
+    return localStorage.getItem('googleUser') !== null;
+}
+
+// Show login notification
+function showLoginNotification() {
+    // Remove existing notification if any
+    const existing = document.getElementById('loginNotification');
+    if (existing) existing.remove();
     
-    if (!savedUser) {
-        // Show login required message - block access
-        if (formContainer) {
-            formContainer.innerHTML = `
-                <div class="kb-login-required">
-                    <div class="kb-login-icon">🔐</div>
-                    <h2>Login Diperlukan</h2>
-                    <p>Untuk mengirim berita, silakan login terlebih dahulu dengan akun Google Anda.</p>
-                    <button type="button" class="kb-btn-login" onclick="showLoginModal()">
-                        Login dengan Google
-                    </button>
-                    <p class="kb-login-note">Dengan login, berita Anda akan terverifikasi dan lebih dipercaya.</p>
-                </div>
-            `;
-        }
-        return false;
+    const notification = document.createElement('div');
+    notification.id = 'loginNotification';
+    notification.className = 'login-notification';
+    notification.innerHTML = `
+        <div class="login-notif-content">
+            <span class="login-notif-icon">🔐</span>
+            <div class="login-notif-text">
+                <strong>Login Diperlukan</strong>
+                <p>Silakan login dengan Google untuk mengirim berita</p>
+            </div>
+            <button type="button" class="login-notif-btn" onclick="showLoginModal(); closeLoginNotification();">
+                Login Sekarang
+            </button>
+            <button type="button" class="login-notif-close" onclick="closeLoginNotification()">×</button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    // Show with animation
+    setTimeout(() => notification.classList.add('active'), 10);
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => closeLoginNotification(), 5000);
+}
+
+function closeLoginNotification() {
+    const notification = document.getElementById('loginNotification');
+    if (notification) {
+        notification.classList.remove('active');
+        setTimeout(() => notification.remove(), 300);
     }
-    return true;
 }
 
 function initKirimBerita() {
     const form = document.getElementById('submitNewsForm');
-    if (!form) return; // Form not available (user not logged in)
+    if (!form) return;
     
     const uploadArea = document.getElementById('imageUploadArea');
     const fileInput = document.getElementById('gambarBerita');
@@ -48,7 +64,7 @@ function initKirimBerita() {
     const tanggalInput = document.getElementById('tanggalBerita');
     const waktuInput = document.getElementById('waktuBerita');
     
-    // Auto-fill name from Google account
+    // Auto-fill name from Google account if logged in
     const savedUser = localStorage.getItem('googleUser');
     if (savedUser) {
         const user = JSON.parse(savedUser);
@@ -60,18 +76,26 @@ function initKirimBerita() {
 
     // Set tanggal dan waktu hari ini
     const now = new Date();
-    tanggalInput.value = now.toISOString().split('T')[0];
-    waktuInput.value = now.toTimeString().slice(0, 5);
+    if (tanggalInput) tanggalInput.value = now.toISOString().split('T')[0];
+    if (waktuInput) waktuInput.value = now.toTimeString().slice(0, 5);
 
-    // Upload gambar - support multiple
+    // Upload area click - check login first
     uploadArea.addEventListener('click', (e) => {
-        if (!e.target.closest('.kb-preview-item')) {
+        if (!e.target.closest('.kb-preview-item') && !e.target.closest('.kb-preview-add')) {
+            if (!isUserLoggedIn()) {
+                showLoginNotification();
+                return;
+            }
             fileInput.click();
         }
     });
     
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
+        if (!isUserLoggedIn()) {
+            showLoginNotification();
+            return;
+        }
         uploadArea.classList.add('dragover');
     });
 
@@ -82,12 +106,22 @@ function initKirimBerita() {
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
+        
+        if (!isUserLoggedIn()) {
+            showLoginNotification();
+            return;
+        }
         handleFiles(e.dataTransfer.files);
     });
 
     fileInput.addEventListener('change', (e) => {
+        if (!isUserLoggedIn()) {
+            showLoginNotification();
+            fileInput.value = '';
+            return;
+        }
         handleFiles(e.target.files);
-        fileInput.value = ''; // Reset untuk bisa upload file yang sama
+        fileInput.value = '';
     });
 
     function handleFiles(files) {
@@ -107,8 +141,6 @@ function initKirimBerita() {
                 alert('Format file tidak didukung. Gunakan JPG, PNG, WebP, GIF, MP4, atau MOV.');
                 return;
             }
-            
-            // No size limit
 
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -143,7 +175,7 @@ function initKirimBerita() {
                 `;
             }).join('') + `
                 ${uploadedImages.length < 5 ? `
-                    <div class="kb-preview-add" onclick="document.getElementById('gambarBerita').click()">
+                    <div class="kb-preview-add" onclick="triggerFileInput()">
                         <span>+</span>
                         <small>Tambah</small>
                     </div>
@@ -157,6 +189,15 @@ function initKirimBerita() {
         }
     }
 
+    // Global function untuk trigger file input dengan login check
+    window.triggerFileInput = function() {
+        if (!isUserLoggedIn()) {
+            showLoginNotification();
+            return;
+        }
+        document.getElementById('gambarBerita').click();
+    };
+
     // Global function untuk remove image
     window.removeImage = function(idx) {
         uploadedImages.splice(idx, 1);
@@ -164,9 +205,11 @@ function initKirimBerita() {
     };
 
     // Character count
-    textarea.addEventListener('input', () => {
-        charCount.textContent = textarea.value.length;
-    });
+    if (textarea) {
+        textarea.addEventListener('input', () => {
+            charCount.textContent = textarea.value.length;
+        });
+    }
 
     // Contact type
     contactRadios.forEach(radio => {
@@ -181,22 +224,20 @@ function initKirimBerita() {
         });
     });
 
-    // Submit form
+    // Submit form - check login
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        // Double check login
-        const savedUser = localStorage.getItem('googleUser');
-        if (!savedUser) {
-            alert('Silakan login terlebih dahulu.');
-            showLoginModal();
+        // Check login first
+        if (!isUserLoggedIn()) {
+            showLoginNotification();
             return;
         }
         
-        const user = JSON.parse(savedUser);
+        const user = JSON.parse(localStorage.getItem('googleUser'));
         
         if (uploadedImages.length === 0) {
-            alert('Silakan upload minimal 1 foto berita.');
+            alert('Silakan upload minimal 1 foto/video berita.');
             return;
         }
 
@@ -210,8 +251,8 @@ function initKirimBerita() {
             id: 'news_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
             judul: document.getElementById('judulBerita').value.trim(),
             penerbit: document.getElementById('namaPenerbit').value.trim(),
-            gambar: uploadedImages.map(m => typeof m === 'string' ? m : m.data), // Array of media data
-            mediaTypes: uploadedImages.map(m => typeof m === 'string' ? 'image' : m.type), // Track types
+            gambar: uploadedImages.map(m => typeof m === 'string' ? m : m.data),
+            mediaTypes: uploadedImages.map(m => typeof m === 'string' ? 'image' : m.type),
             deskripsi: document.getElementById('deskripsiBerita').value.trim(),
             tanggal: document.getElementById('tanggalBerita').value,
             waktu: document.getElementById('waktuBerita').value,
@@ -221,7 +262,6 @@ function initKirimBerita() {
             kontakValue: document.getElementById('kontakValue').value.trim(),
             status: 'pending',
             submittedAt: new Date().toISOString(),
-            // User info from Google login
             submittedBy: {
                 id: user.id,
                 name: user.name,
@@ -242,9 +282,15 @@ function initKirimBerita() {
         form.reset();
         uploadedImages = [];
         renderPreviews();
-        charCount.textContent = '0';
-        tanggalInput.value = new Date().toISOString().split('T')[0];
-        waktuInput.value = new Date().toTimeString().slice(0, 5);
+        if (charCount) charCount.textContent = '0';
+        if (tanggalInput) tanggalInput.value = new Date().toISOString().split('T')[0];
+        if (waktuInput) waktuInput.value = new Date().toTimeString().slice(0, 5);
+        
+        // Re-fill name
+        if (user) {
+            const namaPenerbit = document.getElementById('namaPenerbit');
+            if (namaPenerbit) namaPenerbit.value = user.name;
+        }
     });
 }
 
