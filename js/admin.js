@@ -158,16 +158,17 @@ function renderNews(data, filter = 'pending') {
     const container = document.getElementById('adminNewsList');
     const empty = document.getElementById('emptyState');
     
+    if (!container) return;
+    
     let filtered = filter === 'all' ? data : data.filter(n => n.status === filter);
 
     if (filtered.length === 0) {
-        container.innerHTML = '';
-        container.appendChild(empty);
-        empty.style.display = 'block';
+        container.innerHTML = '<div class="adm-empty-state"><p>Tidak ada berita</p></div>';
+        if (empty) empty.style.display = 'block';
         return;
     }
 
-    empty.style.display = 'none';
+    if (empty) empty.style.display = 'none';
     
     container.innerHTML = filtered.map(news => `
         <div class="adm-news-item" data-id="${news.id}">
@@ -177,10 +178,10 @@ function renderNews(data, filter = 'pending') {
             </div>
             <div class="adm-news-info">
                 <span class="adm-news-status ${news.status}">${statusLabel(news.status)}</span>
-                <h3 class="adm-news-title">${escapeHtml(news.judul)}</h3>
+                <h3 class="adm-news-title">${escapeHtml(news.judul || '')}</h3>
                 <div class="adm-news-meta">
-                    <span>👤 ${escapeHtml(news.penerbit)}</span>
-                    <span>📍 ${escapeHtml(news.lokasi)}</span>
+                    <span>👤 ${escapeHtml(news.penerbit || '')}</span>
+                    <span>📍 ${escapeHtml(news.lokasi || '')}</span>
                     <span>📅 ${formatDate(news.tanggal)}</span>
                 </div>
                 <p class="adm-news-excerpt">${escapeHtml((news.deskripsi || '').substring(0, 100))}...</p>
