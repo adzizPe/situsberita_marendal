@@ -6301,6 +6301,106 @@ img {
   background: #444;
 }
 
+/* ===== Share Buttons Circle Style ===== */
+.share-btn-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.share-btn-circle:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.share-btn-circle.facebook { background: #1877f2; }
+.share-btn-circle.facebook:hover { background: #0d65d9; }
+.share-btn-circle.twitter { background: #000; }
+.share-btn-circle.twitter:hover { background: #333; }
+.share-btn-circle.whatsapp { background: #25d366; }
+.share-btn-circle.whatsapp:hover { background: #1da851; }
+.share-btn-circle.copy { background: #6c757d; }
+.share-btn-circle.copy:hover { background: #5a6268; }
+
+/* ===== Comment Login Prompt with Google Button ===== */
+.comment-login-prompt {
+  background: #f5f5f0;
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.comment-login-prompt p {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.btn-google-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-google-login:hover {
+  background: #f8f8f8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] .comment-login-prompt {
+  background: #111;
+}
+
+[data-theme="dark"] .comment-login-prompt p {
+  color: #999;
+}
+
+[data-theme="dark"] .btn-google-login {
+  background: #222;
+  border-color: #333;
+  color: #fff;
+}
+
+[data-theme="dark"] .btn-google-login:hover {
+  background: #333;
+}
+
+/* ===== Article Meta Mobile Fix ===== */
+@media (max-width: 768px) {
+  .article-meta {
+    flex-direction: column;
+    gap: 8px !important;
+  }
+  
+  .article-meta span {
+    display: block;
+    font-size: 0.85rem;
+  }
+  
+  .share-btn-circle {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* ===== Dark Mode - Submit News Form ===== */
 [data-theme="dark"] .submit-news-form {
   background: #000000;
