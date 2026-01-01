@@ -12,6 +12,18 @@ function updateDate() {
     if (dateElement) {
         dateElement.textContent = dateStr;
     }
+    
+    // Also update mobile weather date
+    const mobileDateEl = document.getElementById('weatherDateMobile');
+    if (mobileDateEl) {
+        const shortDate = now.toLocaleDateString('id-ID', { 
+            weekday: 'short', 
+            day: 'numeric', 
+            month: 'short',
+            year: 'numeric'
+        });
+        mobileDateEl.textContent = '📅 ' + shortDate;
+    }
 }
 
 // ===== Mobile Nav Scroll =====
