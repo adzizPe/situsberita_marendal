@@ -374,8 +374,7 @@ img {
   }
 
   .weather-update {
-    font-size: 0.6rem;
-    margin-left: auto;
+    display: none;
   }
 }
 
