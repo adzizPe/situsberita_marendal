@@ -2,7 +2,7 @@
 const AI_CONFIG = {
     apiUrl: 'https://api.vibe-dev.web.id/v1/chat/completions',
     apiKey: 'vibedevid-I9Y5L5GQocE3m5qgMbE4rRTx0P6ZkJ1V',
-    model: 'claude-opus-4-5-thinking',
+    model: 'claude-sonnet-4-5',
     maxTokens: 800
 };
 
