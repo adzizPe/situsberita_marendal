@@ -12,34 +12,90 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         .ed-page { padding: 30px 0; }
-        .ed-back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; text-decoration: none; }
-        .ed-back:hover { color: var(--primary); }
+        
+        /* Breadcrumb */
+        .ed-breadcrumb {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .ed-breadcrumb a { color: var(--primary); text-decoration: none; }
+        .ed-breadcrumb a:hover { text-decoration: underline; }
         
         .ed-layout { display: grid; grid-template-columns: 1fr 350px; gap: 30px; }
         
-        .ed-main { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-        .ed-poster { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
-        .ed-content { padding: 25px; }
-        .ed-category { display: inline-block; background: var(--primary-light); color: var(--primary); padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: 600; margin-bottom: 12px; }
-        .ed-title { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); margin-bottom: 15px; line-height: 1.3; }
+        /* Hero Section */
+        .ed-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            background: #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
         
-        .ed-meta { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
-        .ed-meta-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-body); }
-        .ed-meta-icon { font-size: 1.1rem; }
+        .ed-hero-img { height: 100%; min-height: 280px; }
+        .ed-hero-img img { width: 100%; height: 100%; object-fit: cover; }
         
-        .ed-desc h3 { font-size: 1rem; color: var(--text-dark); margin-bottom: 10px; }
-        .ed-desc p { color: var(--text-body); line-height: 1.7; font-size: 0.95rem; white-space: pre-line; }
+        .ed-hero-info {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
         
+        .ed-hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+        
+        .ed-hero-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            color: rgba(255,255,255,0.85);
+            font-size: 0.9rem;
+        }
+        
+        .ed-hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ed-hero-price {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .ed-hero-price span {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        
+        .ed-hero-price strong {
+            font-size: 1.3rem;
+            color: #4ade80;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        /* Content */
+        .ed-main { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 25px; }
+        .ed-section-title { font-size: 1.1rem; font-weight: 600; color: var(--text-dark); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+        .ed-desc { font-size: 0.95rem; line-height: 1.8; color: var(--text-body); white-space: pre-line; }
+        
+        /* Sidebar */
         .ed-sidebar { display: flex; flex-direction: column; gap: 20px; }
         .ed-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
         .ed-box h4 { font-size: 0.95rem; color: var(--text-dark); margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
         
-        .ed-info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.9rem; }
-        .ed-info-row:last-child { margin-bottom: 0; }
-        .ed-info-label { color: var(--text-muted); }
-        .ed-info-value { color: var(--text-dark); font-weight: 500; text-align: right; }
-        
-        .ed-register { display: block; width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; transition: background 0.2s; }
+        .ed-register { display: block; width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; transition: background 0.2s; margin-top: 15px; }
         .ed-register:hover { background: var(--primary-dark); }
         
         .ed-contact { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
@@ -50,21 +106,29 @@
         .ed-share-btn { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-body); font-size: 0.85rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
         .ed-share-btn:hover { border-color: var(--primary); color: var(--primary); }
         
+        .ed-info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.9rem; }
+        .ed-info-row:last-child { margin-bottom: 0; }
+        .ed-info-label { color: var(--text-muted); }
+        .ed-info-value { color: var(--text-dark); font-weight: 500; text-align: right; max-width: 60%; }
+        
         .ed-loading { text-align: center; padding: 60px 20px; color: var(--text-muted); }
         .ed-not-found { text-align: center; padding: 60px 20px; }
         .ed-not-found h2 { font-size: 1.3rem; color: var(--text-dark); margin-bottom: 10px; }
         .ed-not-found p { color: var(--text-muted); margin-bottom: 20px; }
         
+        /* Dark Mode */
+        [data-theme="dark"] .ed-hero { background: #0f0f1a; }
         [data-theme="dark"] .ed-main, [data-theme="dark"] .ed-box { background: #111; border-color: #222; }
-        [data-theme="dark"] .ed-title, [data-theme="dark"] .ed-desc h3, [data-theme="dark"] .ed-box h4, [data-theme="dark"] .ed-info-value { color: #fff; }
-        [data-theme="dark"] .ed-category { background: #1a3d2a; }
+        [data-theme="dark"] .ed-section-title, [data-theme="dark"] .ed-box h4, [data-theme="dark"] .ed-info-value, [data-theme="dark"] .ed-contact-value { color: #fff; }
         
+        /* Mobile */
         @media (max-width: 768px) {
+            .ed-hero { grid-template-columns: 1fr; }
+            .ed-hero-img { min-height: 200px; }
+            .ed-hero-info { padding: 20px; }
+            .ed-hero-title { font-size: 1.2rem; }
             .ed-layout { grid-template-columns: 1fr; }
-            .ed-content { padding: 20px; }
-            .ed-title { font-size: 1.2rem; }
-            .ed-meta { gap: 10px; }
-            .ed-meta-item { font-size: 0.85rem; }
+            .ed-main { padding: 20px; }
         }
     </style>
 </head>
@@ -132,7 +196,9 @@
     <main class="main-content">
         <div class="container">
             <div class="ed-page">
-                <a href="../" class="ed-back">← Kembali ke Event</a>
+                <div class="ed-breadcrumb">
+                    <a href="../">Event</a> › Detail Event
+                </div>
                 
                 <div id="eventContent">
                     <div class="ed-loading">Memuat event...</div>
@@ -202,9 +268,6 @@
     <script src="../../js/auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-</body>
-</html>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAAjCd2CvsfiRCVWcwNSmjNt_w3N4eVSbM",
@@ -262,38 +325,39 @@
             const shareText = encodeURIComponent(event.name + ' - ' + formattedDate);
             
             container.innerHTML = `
+                <!-- Hero -->
+                <div class="ed-hero">
+                    <div class="ed-hero-img">
+                        <img src="${event.image || 'https://placehold.co/800x450/ddd/999?text=Event'}" alt="${escapeHtml(event.name)}" onerror="this.src='https://placehold.co/800x450/ddd/999?text=Event'">
+                    </div>
+                    <div class="ed-hero-info">
+                        <h1 class="ed-hero-title">${escapeHtml(event.name)}</h1>
+                        <div class="ed-hero-meta">
+                            <span>📅 ${formattedDate}</span>
+                            <span>🕐 ${event.time || 'TBA'}</span>
+                            <span>📍 ${escapeHtml(event.location)}</span>
+                        </div>
+                        <div class="ed-hero-price">
+                            <span>Harga Tiket:</span>
+                            <strong>${escapeHtml(event.price || 'Gratis')}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content -->
                 <div class="ed-layout">
                     <div class="ed-main">
-                        <img src="${event.image || 'https://placehold.co/800x450/ddd/999?text=Event'}" alt="${escapeHtml(event.name)}" class="ed-poster" onerror="this.src='https://placehold.co/800x450/ddd/999?text=Event'">
-                        <div class="ed-content">
-                            <span class="ed-category">${escapeHtml(event.category || 'Event')}</span>
-                            <h1 class="ed-title">${escapeHtml(event.name)}</h1>
-                            
-                            <div class="ed-meta">
-                                <div class="ed-meta-item">
-                                    <span class="ed-meta-icon">📅</span>
-                                    <span>${formattedDate}</span>
-                                </div>
-                                <div class="ed-meta-item">
-                                    <span class="ed-meta-icon">🕐</span>
-                                    <span>${event.time || 'TBA'}</span>
-                                </div>
-                                <div class="ed-meta-item">
-                                    <span class="ed-meta-icon">📍</span>
-                                    <span>${escapeHtml(event.location)}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="ed-desc">
-                                <h3>Tentang Event</h3>
-                                <p>${escapeHtml(event.description)}</p>
-                            </div>
-                        </div>
+                        <h2 class="ed-section-title">Detail Event</h2>
+                        <div class="ed-desc">${escapeHtml(event.description)}</div>
                     </div>
                     
                     <aside class="ed-sidebar">
                         <div class="ed-box">
-                            <h4>📋 Informasi Event</h4>
+                            <h4>📋 Informasi</h4>
+                            <div class="ed-info-row">
+                                <span class="ed-info-label">Kategori</span>
+                                <span class="ed-info-value">${escapeHtml(event.category || '-')}</span>
+                            </div>
                             <div class="ed-info-row">
                                 <span class="ed-info-label">Tanggal</span>
                                 <span class="ed-info-value">${formattedDate}</span>
@@ -311,7 +375,7 @@
                                 <span class="ed-info-value">${escapeHtml(event.price || 'Gratis')}</span>
                             </div>
                             
-                            ${event.link ? `<a href="${event.link}" target="_blank" class="ed-register" style="margin-top:20px;">Daftar Sekarang</a>` : ''}
+                            ${event.link ? `<a href="${event.link}" target="_blank" class="ed-register">Daftar Sekarang</a>` : ''}
                             
                             ${event.contact ? `
                             <div class="ed-contact">
@@ -343,3 +407,5 @@
         
         document.addEventListener('DOMContentLoaded', loadEventDetail);
     </script>
+</body>
+</html>
