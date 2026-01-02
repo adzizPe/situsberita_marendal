@@ -42,9 +42,22 @@ function initFirebaseNews() {
 
 // Save news to Firebase Database
 async function saveNewsToFirebase(newsData) {
+    // Generate slug from title
+    newsData.slug = generateSlug(newsData.judul);
     const newsRef = newsDatabase.ref('newsSubmissions/' + newsData.id);
     await newsRef.set(newsData);
     return newsData.id;
+}
+
+// Generate URL-friendly slug from title
+function generateSlug(title) {
+    return title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // hapus karakter spesial
+        .replace(/\s+/g, '-')          // spasi jadi dash
+        .replace(/-+/g, '-')           // multiple dash jadi single
+        .substring(0, 60)              // max 60 karakter
+        .replace(/-$/, '');            // hapus dash di akhir
 }
 
 // Get all news from Firebase (realtime)
@@ -90,3 +103,25 @@ window.firebaseNews = {
     updateStatus: updateNewsStatus,
     delete: deleteNews
 };
+
+
+// Update existing news with slug (run once for old data)
+async function updateExistingNewsWithSlug() {
+    const newsRef = newsDatabase.ref('newsSubmissions');
+    const snapshot = await newsRef.once('value');
+    
+    if (snapshot.exists()) {
+        snapshot.forEach((child) => {
+            const news = child.val();
+            if (!news.slug && news.judul) {
+                const slug = generateSlug(news.judul);
+                newsDatabase.ref('newsSubmissions/' + news.id + '/slug').set(slug);
+                console.log('Added slug for:', news.judul, '->', slug);
+            }
+        });
+    }
+}
+
+// Export
+window.firebaseNews.generateSlug = generateSlug;
+window.firebaseNews.updateSlugs = updateExistingNewsWithSlug;

@@ -152,9 +152,10 @@
         
         let database;
         
-        // Get news ID from URL
+        // Get news ID or slug from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const newsId = urlParams.get('id');
+        const newsSlug = urlParams.get('slug');
+        const newsId = urlParams.get('id'); // fallback untuk link lama
         
         function initFirebase() {
             return new Promise((resolve) => {
@@ -181,25 +182,49 @@
             
             await initFirebase();
             
-            // Get news from Firebase
-            const newsRef = database.ref('newsSubmissions/' + newsId);
-            newsRef.once('value', (snapshot) => {
-                const news = snapshot.val();
-                
-                if (!news || news.status !== 'approved') {
-                    container.innerHTML = `
-                        <div class="article-not-found">
-                            <h2>Berita Tidak Ditemukan</h2>
-                            <p>Berita yang Anda cari tidak tersedia atau belum disetujui.</p>
-                            <a href="../../berita/" class="btn-back">← Kembali ke Berita</a>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                renderNewsDetail(news);
-                loadRelatedNews(news.kategori, news.id);
-            });
+            // Search by slug or id
+            if (newsSlug) {
+                // Find news by slug
+                database.ref('newsSubmissions').orderByChild('slug').equalTo(newsSlug).once('value', (snapshot) => {
+                    let news = null;
+                    snapshot.forEach((child) => {
+                        news = child.val();
+                    });
+                    
+                    if (!news || news.status !== 'approved') {
+                        showNotFound(container);
+                        return;
+                    }
+                    
+                    renderNewsDetail(news);
+                    loadRelatedNews(news.kategori, news.id);
+                });
+            } else if (newsId) {
+                // Fallback: find by id (untuk link lama)
+                database.ref('newsSubmissions/' + newsId).once('value', (snapshot) => {
+                    const news = snapshot.val();
+                    
+                    if (!news || news.status !== 'approved') {
+                        showNotFound(container);
+                        return;
+                    }
+                    
+                    renderNewsDetail(news);
+                    loadRelatedNews(news.kategori, news.id);
+                });
+            } else {
+                showNotFound(container);
+            }
+        }
+        
+        function showNotFound(container) {
+            container.innerHTML = `
+                <div class="article-not-found">
+                    <h2>Berita Tidak Ditemukan</h2>
+                    <p>Berita yang Anda cari tidak tersedia atau belum disetujui.</p>
+                    <a href="../../berita/" class="btn-back">← Kembali ke Berita</a>
+                </div>
+            `;
         }
         
         function renderNewsDetail(news) {
@@ -415,11 +440,12 @@
                 
                 container.innerHTML = related.slice(0, 3).map(news => {
                     const img = Array.isArray(news.gambar) ? news.gambar[0] : news.gambar;
+                    const slug = news.slug || news.id;
                     return `
                         <div class="related-item">
                             <img src="${img}" alt="" onerror="this.src='https://placehold.co/80x60/eee/999?text=Img'">
                             <div class="related-content">
-                                <h4><a href="./?id=${news.id}">${escapeHtml(news.judul)}</a></h4>
+                                <h4><a href="./?slug=${slug}">${escapeHtml(news.judul)}</a></h4>
                                 <span>${formatDate(news.tanggal)}</span>
                             </div>
                         </div>

@@ -105,10 +105,11 @@ function renderNewsGrid(publishedNews = []) {
         const mediaTypes = news.mediaTypes || images.map(() => 'image');
         const isVideo = mediaTypes[0] === 'video';
         const searchTitle = (news.judul + ' ' + news.lokasi + ' ' + news.deskripsi).toLowerCase();
+        const slug = news.slug || news.id; // fallback ke id kalau belum ada slug
         
         html += `
             <article class="news-card-full" data-kategori="${news.kategori}" data-title="${escapeHtml(searchTitle)}">
-                <a href="./detail/?id=${news.id}" class="news-card-image">
+                <a href="./detail/?slug=${slug}" class="news-card-image">
                     <span class="news-badge-user">Kiriman Warga</span>
                     ${isVideo ? 
                         `<video src="${images[0]}" autoplay muted loop playsinline></video>` :
@@ -117,7 +118,7 @@ function renderNewsGrid(publishedNews = []) {
                 </a>
                 <div class="news-card-content">
                     <span class="news-card-category">${capitalize(news.kategori)}</span>
-                    <h3 class="news-card-title"><a href="./detail/?id=${news.id}">${escapeHtml(news.judul)}</a></h3>
+                    <h3 class="news-card-title"><a href="./detail/?slug=${slug}">${escapeHtml(news.judul)}</a></h3>
                     <p class="news-card-excerpt">${escapeHtml((news.deskripsi || '').substring(0, 150))}...</p>
                     <span class="news-card-meta">📅 ${formatDate(news.tanggal)} • 📍 ${escapeHtml(news.lokasi)}</span>
                 </div>
