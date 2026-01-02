@@ -45,6 +45,10 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                     Berita Masuk
                 </a>
+                <a href="#" class="adm-nav-item" data-section="events" onclick="showSection('events')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Event Masuk
+                </a>
                 <a href="#" class="adm-nav-item" data-section="users" onclick="showSection('users')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Users Login
@@ -113,6 +117,37 @@
                 </div>
                 <div class="adm-users-list" id="usersList">
                     <p class="adm-loading">Memuat data users...</p>
+                </div>
+            </div>
+            
+            <!-- Events Section (hidden by default) -->
+            <div class="adm-content adm-section" id="eventsSection" style="display: none;">
+                <div class="adm-stats-row">
+                    <div class="adm-stat-box">
+                        <span class="adm-stat-num" id="eventPendingCount">0</span>
+                        <span class="adm-stat-label">Menunggu</span>
+                    </div>
+                    <div class="adm-stat-box success">
+                        <span class="adm-stat-num" id="eventApprovedCount">0</span>
+                        <span class="adm-stat-label">Disetujui</span>
+                    </div>
+                    <div class="adm-stat-box danger">
+                        <span class="adm-stat-num" id="eventRejectedCount">0</span>
+                        <span class="adm-stat-label">Ditolak</span>
+                    </div>
+                </div>
+                
+                <div class="adm-filter">
+                    <button type="button" class="adm-filter-btn active" data-filter="pending" onclick="filterEvents('pending')">Menunggu</button>
+                    <button type="button" class="adm-filter-btn" data-filter="approved" onclick="filterEvents('approved')">Disetujui</button>
+                    <button type="button" class="adm-filter-btn" data-filter="rejected" onclick="filterEvents('rejected')">Ditolak</button>
+                    <button type="button" class="adm-filter-btn" data-filter="all" onclick="filterEvents('all')">Semua</button>
+                </div>
+                
+                <div class="adm-news-list" id="adminEventsList">
+                    <div class="adm-empty">
+                        <p>Belum ada event masuk</p>
+                    </div>
                 </div>
             </div>
         </main>

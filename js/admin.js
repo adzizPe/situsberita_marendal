@@ -8,6 +8,20 @@ document.addEventListener('DOMContentLoaded', function() {
 const ADMIN = { username: 'adminsiapaaja', password: 'adminsiapaaja' };
 
 let allNewsData = []; // Store all news from Firebase
+let allEventsData = []; // Store all events from Firebase
+
+// Firebase config for events
+const firebaseConfig = {
+    apiKey: "AIzaSyAAjCd2CvsfiRCVWcwNSmjNt_w3N4eVSbM",
+    databaseURL: "https://login-fe9bf-default-rtdb.firebaseio.com",
+    projectId: "login-fe9bf"
+};
+
+let eventAdminApp;
+try { eventAdminApp = firebase.app('eventAdminApp'); }
+catch (e) { eventAdminApp = firebase.initializeApp(firebaseConfig, 'eventAdminApp'); }
+
+const eventAdminDb = eventAdminApp.database();
 
 function checkSession() {
     if (sessionStorage.getItem('adminLoggedIn') === 'true') {
@@ -40,6 +54,7 @@ function showDashboard() {
     document.getElementById('adminDashboard').classList.add('active');
     loadNews();
     loadUsers();
+    loadEvents();
 }
 
 function initDashboard() {
@@ -68,14 +83,20 @@ function showSection(section) {
     
     const topbarTitle = document.querySelector('.adm-topbar h2');
     
+    // Hide all sections first
+    document.querySelector('.adm-content:not(.adm-section)').style.display = 'none';
+    document.getElementById('usersSection').style.display = 'none';
+    document.getElementById('eventsSection').style.display = 'none';
+    
     if (section === 'news') {
         document.querySelector('.adm-content:not(.adm-section)').style.display = 'block';
-        document.getElementById('usersSection').style.display = 'none';
         if (topbarTitle) topbarTitle.textContent = 'Berita Masuk';
     } else if (section === 'users') {
-        document.querySelector('.adm-content:not(.adm-section)').style.display = 'none';
         document.getElementById('usersSection').style.display = 'block';
         if (topbarTitle) topbarTitle.textContent = 'Users Login';
+    } else if (section === 'events') {
+        document.getElementById('eventsSection').style.display = 'block';
+        if (topbarTitle) topbarTitle.textContent = 'Event Masuk';
     }
 }
 
@@ -415,3 +436,218 @@ window.viewDetail = viewDetail;
 window.closeDetailModal = closeDetailModal;
 window.confirmAction = confirmAction;
 window.closeConfirmModal = closeConfirmModal;
+
+// ==================== EVENT MANAGEMENT ====================
+
+function loadEvents() {
+    const container = document.getElementById('adminEventsList');
+    if (!container) return;
+    
+    container.innerHTML = '<p style="text-align:center;padding:40px;color:#888;">Memuat data event...</p>';
+    
+    eventAdminDb.ref('eventSubmissions').on('value', (snapshot) => {
+        const data = snapshot.val();
+        allEventsData = data ? Object.values(data).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
+        updateEventStats();
+        renderEvents(allEventsData, 'pending');
+    });
+}
+
+function renderEvents(data, filter = 'pending') {
+    const container = document.getElementById('adminEventsList');
+    if (!container) return;
+    
+    let filtered = filter === 'all' ? data : data.filter(e => e.status === filter);
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="adm-empty-state"><p>Tidak ada event</p></div>';
+        return;
+    }
+    
+    container.innerHTML = filtered.map(event => `
+        <div class="adm-news-item" data-id="${event.id}">
+            <div class="adm-news-thumb">
+                <img src="${event.image || 'https://placehold.co/100x80/eee/999?text=No+Image'}" alt="" onerror="this.src='https://placehold.co/100x80/eee/999?text=Error'">
+            </div>
+            <div class="adm-news-info">
+                <span class="adm-news-status ${event.status}">${statusLabel(event.status)}</span>
+                <h3 class="adm-news-title">${escapeHtml(event.name || '')}</h3>
+                <div class="adm-news-meta">
+                    <span>📅 ${formatDate(event.date)}</span>
+                    <span>📍 ${escapeHtml(event.location || '')}</span>
+                    <span>🎫 ${escapeHtml(event.price || 'Gratis')}</span>
+                </div>
+                <p class="adm-news-excerpt">${escapeHtml((event.description || '').substring(0, 100))}...</p>
+                <div class="adm-news-submitted">
+                    <small>📩 Dikirim: ${formatDateTime(event.createdAt)}</small>
+                </div>
+            </div>
+            <div class="adm-news-actions">
+                <button type="button" class="adm-btn adm-btn-view" onclick="viewEventDetail('${event.id}')">Lihat</button>
+                ${event.status === 'pending' ? `
+                    <button type="button" class="adm-btn adm-btn-approve" onclick="confirmEventAction('${event.id}', 'approve')">✓ Setujui</button>
+                    <button type="button" class="adm-btn adm-btn-reject" onclick="confirmEventAction('${event.id}', 'reject')">✕ Tolak</button>
+                ` : ''}
+                <button type="button" class="adm-btn adm-btn-delete" onclick="confirmEventAction('${event.id}', 'delete')">🗑 Hapus</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterEvents(filter) {
+    // Update active button
+    document.querySelectorAll('#eventsSection .adm-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.filter === filter) btn.classList.add('active');
+    });
+    renderEvents(allEventsData, filter);
+}
+
+function updateEventStats() {
+    const pending = document.getElementById('eventPendingCount');
+    const approved = document.getElementById('eventApprovedCount');
+    const rejected = document.getElementById('eventRejectedCount');
+    
+    if (pending) pending.textContent = allEventsData.filter(e => e.status === 'pending').length;
+    if (approved) approved.textContent = allEventsData.filter(e => e.status === 'approved').length;
+    if (rejected) rejected.textContent = allEventsData.filter(e => e.status === 'rejected').length;
+}
+
+function viewEventDetail(id) {
+    const event = allEventsData.find(e => e.id === id);
+    if (!event) return;
+    
+    const submitter = event.submittedBy || {};
+    
+    document.getElementById('modalBody').innerHTML = `
+        <div class="adm-detail-header">
+            <span class="adm-news-status ${event.status}">${statusLabel(event.status)}</span>
+            <h2 class="adm-detail-title">${escapeHtml(event.name)}</h2>
+        </div>
+        
+        ${event.image ? `
+        <div class="adm-detail-gallery">
+            <div class="adm-gallery-main">
+                <img src="${event.image}" alt="" onerror="this.src='https://placehold.co/400x300/eee/999?text=Error'">
+            </div>
+        </div>
+        ` : ''}
+        
+        ${submitter.email ? `
+        <div class="adm-detail-user">
+            <div class="adm-detail-user-header">
+                <span>👤 Akun Google Pengirim</span>
+            </div>
+            <div class="adm-detail-user-info">
+                <img src="${submitter.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(submitter.name || 'User')}" alt="">
+                <div>
+                    <strong>${escapeHtml(submitter.name || '-')}</strong>
+                    <small>${escapeHtml(submitter.email || '-')}</small>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+        
+        <div class="adm-detail-info">
+            <div class="adm-detail-row">
+                <span class="adm-detail-label">Kategori</span>
+                <span class="adm-detail-value">${escapeHtml(event.category || '-')}</span>
+            </div>
+            <div class="adm-detail-row">
+                <span class="adm-detail-label">Tanggal Event</span>
+                <span class="adm-detail-value">${formatDate(event.date)} ${event.time || ''}</span>
+            </div>
+            <div class="adm-detail-row">
+                <span class="adm-detail-label">Lokasi</span>
+                <span class="adm-detail-value">${escapeHtml(event.location || '-')}</span>
+            </div>
+            <div class="adm-detail-row">
+                <span class="adm-detail-label">Harga</span>
+                <span class="adm-detail-value">${escapeHtml(event.price || 'Gratis')}</span>
+            </div>
+            <div class="adm-detail-row">
+                <span class="adm-detail-label">Link Pendaftaran</span>
+                <span class="adm-detail-value">${event.link ? `<a href="${event.link}" target="_blank">${event.link}</a>` : '-'}</span>
+            </div>
+            <div class="adm-detail-row">
+                <span class="adm-detail-label">Kontak</span>
+                <span class="adm-detail-value">${escapeHtml(event.contact || '-')}</span>
+            </div>
+            <div class="adm-detail-row">
+                <span class="adm-detail-label">Waktu Dikirim</span>
+                <span class="adm-detail-value">${formatDateTime(event.createdAt)}</span>
+            </div>
+        </div>
+        
+        <div class="adm-detail-content">
+            <h4>Deskripsi Event:</h4>
+            <p>${escapeHtml(event.description || '').replace(/\n/g, '<br>')}</p>
+        </div>
+        
+        <div class="adm-detail-actions">
+            ${event.status === 'pending' ? `
+                <button type="button" class="adm-btn adm-btn-approve" onclick="confirmEventAction('${event.id}', 'approve'); closeDetailModal();">✓ Setujui</button>
+                <button type="button" class="adm-btn adm-btn-reject" onclick="confirmEventAction('${event.id}', 'reject'); closeDetailModal();">✕ Tolak</button>
+            ` : ''}
+            <button type="button" class="adm-btn adm-btn-delete" onclick="confirmEventAction('${event.id}', 'delete'); closeDetailModal();">🗑 Hapus</button>
+        </div>
+    `;
+    
+    document.getElementById('detailModal').classList.add('active');
+}
+
+let pendingEventAction = null;
+
+function confirmEventAction(id, action) {
+    pendingEventAction = { id, action };
+    
+    const title = document.getElementById('confirmTitle');
+    const msg = document.getElementById('confirmMessage');
+    const btn = document.getElementById('btnConfirmAction');
+    
+    if (action === 'approve') {
+        title.textContent = 'Setujui Event?';
+        msg.textContent = 'Event akan dipublikasikan ke halaman event.';
+        btn.className = 'adm-btn-confirm';
+        btn.textContent = 'Ya, Setujui';
+    } else if (action === 'reject') {
+        title.textContent = 'Tolak Event?';
+        msg.textContent = 'Event tidak akan dipublikasikan.';
+        btn.className = 'adm-btn-confirm danger';
+        btn.textContent = 'Ya, Tolak';
+    } else if (action === 'delete') {
+        title.textContent = 'Hapus Event?';
+        msg.textContent = 'Event akan dihapus permanen dan tidak bisa dikembalikan.';
+        btn.className = 'adm-btn-confirm danger';
+        btn.textContent = 'Ya, Hapus';
+    }
+    
+    btn.onclick = executeEventAction;
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+async function executeEventAction() {
+    if (!pendingEventAction) return;
+    
+    const { id, action } = pendingEventAction;
+    
+    try {
+        if (action === 'delete') {
+            await eventAdminDb.ref('eventSubmissions/' + id).remove();
+        } else if (action === 'approve') {
+            await eventAdminDb.ref('eventSubmissions/' + id + '/status').set('approved');
+        } else if (action === 'reject') {
+            await eventAdminDb.ref('eventSubmissions/' + id + '/status').set('rejected');
+        }
+    } catch (err) {
+        console.error('Event action error:', err);
+        alert('Gagal melakukan aksi: ' + err.message);
+    }
+    
+    closeConfirmModal();
+    pendingEventAction = null;
+}
+
+window.viewEventDetail = viewEventDetail;
+window.confirmEventAction = confirmEventAction;
+window.filterEvents = filterEvents;
