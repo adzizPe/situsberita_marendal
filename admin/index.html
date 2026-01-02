@@ -53,6 +53,10 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Users Login
                 </a>
+                <a href="#" class="adm-nav-item" data-section="quiz" onclick="showSection('quiz')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Quiz Berita
+                </a>
                 <a href="../" class="adm-nav-item">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     Lihat Situs
@@ -150,6 +154,50 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Quiz Section (hidden by default) -->
+            <div class="adm-content adm-section" id="quizSection" style="display: none;">
+                <div class="adm-stats-row">
+                    <div class="adm-stat-box">
+                        <span class="adm-stat-num" id="quizTotalQuestions">0</span>
+                        <span class="adm-stat-label">Total Soal</span>
+                    </div>
+                    <div class="adm-stat-box success">
+                        <span class="adm-stat-num" id="quizTotalPlayers">0</span>
+                        <span class="adm-stat-label">Total Pemain</span>
+                    </div>
+                    <div class="adm-stat-box">
+                        <span class="adm-stat-num" id="quizTodayPlays">0</span>
+                        <span class="adm-stat-label">Main Hari Ini</span>
+                    </div>
+                </div>
+                
+                <div class="adm-quiz-tabs">
+                    <button type="button" class="adm-quiz-tab active" onclick="showQuizTab('questions')">📝 Kelola Soal</button>
+                    <button type="button" class="adm-quiz-tab" onclick="showQuizTab('stats')">📊 Statistik Pemain</button>
+                </div>
+                
+                <!-- Questions Tab -->
+                <div class="adm-quiz-content" id="quizQuestionsTab">
+                    <div class="adm-quiz-header">
+                        <h3>Daftar Soal Quiz</h3>
+                        <button type="button" class="adm-btn adm-btn-add" onclick="showAddQuestionModal()">+ Tambah Soal</button>
+                    </div>
+                    <div class="adm-quiz-list" id="quizQuestionsList">
+                        <p class="adm-loading">Memuat soal...</p>
+                    </div>
+                </div>
+                
+                <!-- Stats Tab -->
+                <div class="adm-quiz-content" id="quizStatsTab" style="display: none;">
+                    <div class="adm-quiz-header">
+                        <h3>Top 10 Pemain</h3>
+                    </div>
+                    <div class="adm-quiz-leaderboard" id="quizLeaderboardList">
+                        <p class="adm-loading">Memuat data...</p>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -172,6 +220,103 @@
             </div>
         </div>
     </div>
+    
+    <!-- Add Question Modal -->
+    <div class="adm-modal-overlay" id="questionModal">
+        <div class="adm-modal adm-modal-lg">
+            <button type="button" class="adm-modal-close" onclick="closeQuestionModal()">×</button>
+            <h3 id="questionModalTitle">Tambah Soal Quiz</h3>
+            <form id="questionForm" class="adm-question-form">
+                <div class="adm-form-field">
+                    <label>Pertanyaan <span>*</span></label>
+                    <textarea id="questionText" rows="3" placeholder="Tulis pertanyaan..." required></textarea>
+                </div>
+                <div class="adm-form-field">
+                    <label>Pilihan Jawaban <span>*</span></label>
+                    <input type="text" id="optionA" placeholder="Pilihan A" required>
+                    <input type="text" id="optionB" placeholder="Pilihan B" required>
+                    <input type="text" id="optionC" placeholder="Pilihan C" required>
+                    <input type="text" id="optionD" placeholder="Pilihan D" required>
+                </div>
+                <div class="adm-form-field">
+                    <label>Jawaban Benar <span>*</span></label>
+                    <select id="correctAnswer" required>
+                        <option value="">Pilih jawaban benar</option>
+                        <option value="0">A</option>
+                        <option value="1">B</option>
+                        <option value="2">C</option>
+                        <option value="3">D</option>
+                    </select>
+                </div>
+                <div class="adm-form-actions">
+                    <button type="button" class="adm-btn-cancel" onclick="closeQuestionModal()">Batal</button>
+                    <button type="submit" class="adm-btn-confirm">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Quiz Admin Styles */
+        .adm-quiz-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .adm-quiz-tab {
+            padding: 10px 20px; border: 1px solid #ddd; background: #fff;
+            border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+        }
+        .adm-quiz-tab:hover { border-color: #2d8a4e; }
+        .adm-quiz-tab.active { background: #2d8a4e; color: #fff; border-color: #2d8a4e; }
+        
+        .adm-quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .adm-quiz-header h3 { font-size: 1rem; color: #333; }
+        .adm-btn-add { padding: 8px 16px; background: #2d8a4e; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        .adm-btn-add:hover { background: #246b3e; }
+        
+        .adm-quiz-list { display: flex; flex-direction: column; gap: 12px; }
+        .adm-quiz-item {
+            display: flex; gap: 15px; padding: 15px; background: #fff;
+            border: 1px solid #eee; border-radius: 10px; align-items: flex-start;
+        }
+        .adm-quiz-item:hover { border-color: #ddd; }
+        .adm-quiz-num { width: 30px; height: 30px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; flex-shrink: 0; }
+        .adm-quiz-info { flex: 1; }
+        .adm-quiz-question { font-size: 0.95rem; color: #333; margin-bottom: 8px; line-height: 1.5; }
+        .adm-quiz-options { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: #666; }
+        .adm-quiz-options span { padding: 4px 10px; background: #f5f5f5; border-radius: 4px; }
+        .adm-quiz-options span.correct { background: #dcfce7; color: #166534; }
+        .adm-quiz-actions { display: flex; gap: 8px; }
+        .adm-quiz-actions button { padding: 6px 12px; border: 1px solid #ddd; background: #fff; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+        .adm-quiz-actions button:hover { border-color: #999; }
+        .adm-quiz-actions .btn-delete { color: #dc2626; }
+        .adm-quiz-actions .btn-delete:hover { background: #fef2f2; border-color: #dc2626; }
+        
+        .adm-quiz-leaderboard { display: flex; flex-direction: column; gap: 10px; }
+        .adm-lb-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; }
+        .adm-lb-rank { width: 28px; height: 28px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; }
+        .adm-lb-rank.gold { background: #fef3c7; color: #92400e; }
+        .adm-lb-rank.silver { background: #f3f4f6; color: #4b5563; }
+        .adm-lb-rank.bronze { background: #fed7aa; color: #9a3412; }
+        .adm-lb-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+        .adm-lb-info { flex: 1; }
+        .adm-lb-name { font-weight: 500; color: #333; font-size: 0.9rem; }
+        .adm-lb-email { font-size: 0.75rem; color: #888; }
+        .adm-lb-score { font-weight: 700; color: #2d8a4e; font-size: 1rem; }
+        .adm-lb-count { font-size: 0.75rem; color: #888; }
+        
+        .adm-modal-lg { max-width: 500px; }
+        .adm-question-form { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+        .adm-form-field label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
+        .adm-form-field label span { color: #dc2626; }
+        .adm-form-field input, .adm-form-field textarea, .adm-form-field select {
+            width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; margin-bottom: 8px;
+        }
+        .adm-form-field input:focus, .adm-form-field textarea:focus, .adm-form-field select:focus { outline: none; border-color: #2d8a4e; }
+        .adm-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+        
+        @media (max-width: 768px) {
+            .adm-quiz-item { flex-direction: column; }
+            .adm-quiz-actions { width: 100%; justify-content: flex-end; }
+        }
+    </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>

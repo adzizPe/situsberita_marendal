@@ -1,158 +1,299 @@
-// ===== Quiz Data =====
-const quizQuestions = [
+// Quiz Berita Harian
+const firebaseConfig = {
+    apiKey: "AIzaSyAAjCd2CvsfiRCVWcwNSmjNt_w3N4eVSbM",
+    databaseURL: "https://login-fe9bf-default-rtdb.firebaseio.com",
+    projectId: "login-fe9bf"
+};
+
+let quizApp, quizDb;
+let currentUser = null;
+let questions = [];
+let currentQuestion = 0;
+let selectedAnswer = null;
+let userAnswers = [];
+let score = 0;
+
+// Default questions (admin bisa tambah dari panel)
+const defaultQuestions = [
     {
-        question: "Berapa total anggaran APBD Sumut 2026 yang baru disahkan?",
-        options: ["Rp 15 triliun", "Rp 18,5 triliun", "Rp 20 triliun", "Rp 12 triliun"],
-        correct: 1
+        question: "Apa nama ibu kota Provinsi Sumatera Utara?",
+        options: ["Binjai", "Medan", "Pematangsiantar", "Tebing Tinggi"],
+        answer: 1
     },
     {
-        question: "Tim sepak bola mana yang meraih kemenangan dramatis di Stadion Teladan?",
-        options: ["Persib Bandung", "Persija Jakarta", "PSMS Medan", "Arema FC"],
-        correct: 2
+        question: "Danau vulkanik terbesar di dunia yang terletak di Sumatera Utara adalah?",
+        options: ["Danau Singkarak", "Danau Toba", "Danau Maninjau", "Danau Kerinci"],
+        answer: 1
     },
     {
-        question: "Berapa kabupaten/kota di Sumut yang mendapat program vaksinasi gratis?",
-        options: ["25", "30", "33", "35"],
-        correct: 2
+        question: "Bandara internasional utama di Sumatera Utara bernama?",
+        options: ["Soekarno-Hatta", "Kualanamu", "Juanda", "Sultan Hasanuddin"],
+        answer: 1
     },
     {
-        question: "Siswa dari sekolah mana yang meraih medali emas Olimpiade Sains Nasional?",
-        options: ["SMA Negeri 2 Medan", "SMA Negeri 1 Medan", "SMA Sutomo", "SMA Methodist"],
-        correct: 1
+        question: "Makanan khas Medan yang terbuat dari mie kuning dengan kuah santan adalah?",
+        options: ["Mie Aceh", "Mie Gomak", "Mie Medan", "Mie Ayam"],
+        answer: 1
     },
     {
-        question: "Festival kuliner Medan 2025 menghadirkan berapa tenant UMKM?",
-        options: ["50 tenant", "75 tenant", "100 tenant", "150 tenant"],
-        correct: 2
+        question: "Suku asli yang mendiami kawasan Danau Toba adalah?",
+        options: ["Suku Melayu", "Suku Batak", "Suku Minang", "Suku Aceh"],
+        answer: 1
     }
 ];
 
-// ===== Quiz State =====
-let currentQuestion = 0;
-let score = 0;
-let correctAnswers = 0;
-let timer;
-let timeLeft = 300; // 5 minutes in seconds
-
-// ===== DOM Elements =====
-const quizStart = document.getElementById('quizStart');
-const quizQuestions_el = document.getElementById('quizQuestions');
-const quizResult = document.getElementById('quizResult');
-const questionCard = document.getElementById('questionCard');
-const progressFill = document.getElementById('progressFill');
-const questionNumber = document.getElementById('questionNumber');
-const timerDisplay = document.getElementById('timer');
-
-// ===== Start Quiz =====
-document.getElementById('btnStartQuiz')?.addEventListener('click', startQuiz);
-
-function startQuiz() {
-    quizStart.style.display = 'none';
-    quizQuestions_el.style.display = 'block';
-    currentQuestion = 0;
-    score = 0;
-    correctAnswers = 0;
-    timeLeft = 300;
-    loadQuestion();
-    startTimer();
+function initFirebase() {
+    try { quizApp = firebase.app('quizApp'); }
+    catch (e) { quizApp = firebase.initializeApp(firebaseConfig, 'quizApp'); }
+    quizDb = quizApp.database();
 }
 
-// ===== Load Question =====
-function loadQuestion() {
-    const q = quizQuestions[currentQuestion];
-    const progress = ((currentQuestion) / quizQuestions.length) * 100;
-    
-    progressFill.style.width = `${progress}%`;
-    questionNumber.textContent = `${currentQuestion + 1}/${quizQuestions.length}`;
-    
-    questionCard.innerHTML = `
-        <h3 class="question-text">${q.question}</h3>
-        <div class="options-list">
-            ${q.options.map((opt, i) => `
-                <button class="option-btn" data-index="${i}">${opt}</button>
-            `).join('')}
+function getTodayDate() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function checkLoginStatus() {
+    const userData = localStorage.getItem('googleUser');
+    if (userData) {
+        currentUser = JSON.parse(userData);
+        checkTodayQuiz();
+    } else {
+        showLoginRequired();
+    }
+}
+
+function showLoginRequired() {
+    document.getElementById('quizContainer').innerHTML = `
+        <div class="quiz-login">
+            <div class="quiz-login-icon">🔐</div>
+            <h2>Login Diperlukan</h2>
+            <p>Silakan login dengan Google untuk memulai quiz</p>
+            <button type="button" class="quiz-login-btn" onclick="showLoginModal()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Login dengan Google
+            </button>
         </div>
     `;
+}
+
+function checkTodayQuiz() {
+    const today = getTodayDate();
+    const oderId = currentUser.id || currentUser.email.replace(/[.@]/g, '_');
     
-    // Add click handlers
-    document.querySelectorAll('.option-btn').forEach(btn => {
-        btn.addEventListener('click', () => selectAnswer(parseInt(btn.dataset.index)));
+    quizDb.ref('quizResults/' + oderId + '_' + today).once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const result = snapshot.val();
+            showAlreadyPlayed(result);
+        } else {
+            loadQuestions();
+        }
     });
 }
 
-// ===== Select Answer =====
-function selectAnswer(index) {
-    const q = quizQuestions[currentQuestion];
-    const buttons = document.querySelectorAll('.option-btn');
-    
-    buttons.forEach(btn => btn.disabled = true);
-    
-    if (index === q.correct) {
-        buttons[index].classList.add('correct');
-        score += 10;
-        correctAnswers++;
-    } else {
-        buttons[index].classList.add('wrong');
-        buttons[q.correct].classList.add('correct');
-    }
-    
-    setTimeout(() => {
-        currentQuestion++;
-        if (currentQuestion < quizQuestions.length) {
-            loadQuestion();
+function showAlreadyPlayed(result) {
+    const emoji = result.score >= 80 ? '🏆' : result.score >= 60 ? '👍' : '💪';
+    document.getElementById('quizContainer').innerHTML = `
+        <div class="quiz-done">
+            <div class="quiz-done-icon">${emoji}</div>
+            <h2>Kamu sudah main hari ini!</h2>
+            <p>Skor kamu:</p>
+            <div class="quiz-done-score">${result.score}</div>
+            <p>Benar: ${result.correct} dari ${result.total} soal</p>
+            <div class="quiz-done-info">
+                Kembali besok untuk quiz baru ya! 🎯<br>
+                <a href="./leaderboard/" style="color:var(--primary);margin-top:15px;display:inline-block;">Lihat Papan Peringkat →</a>
+            </div>
+        </div>
+    `;
+}
+
+function loadQuestions() {
+    // Load from Firebase or use default
+    quizDb.ref('quizQuestions').once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            questions = Object.values(data);
+            // Shuffle and take 5
+            questions = shuffleArray(questions).slice(0, 5);
         } else {
-            endQuiz();
+            questions = shuffleArray([...defaultQuestions]).slice(0, 5);
         }
-    }, 1000);
+        startQuiz();
+    });
 }
 
-// ===== Timer =====
-function startTimer() {
-    timer = setInterval(() => {
-        timeLeft--;
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function startQuiz() {
+    currentQuestion = 0;
+    selectedAnswer = null;
+    userAnswers = [];
+    score = 0;
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const q = questions[currentQuestion];
+    const progress = ((currentQuestion) / questions.length) * 100;
+    const letters = ['A', 'B', 'C', 'D'];
+    
+    document.getElementById('quizContainer').innerHTML = `
+        <div class="quiz-progress">
+            <div class="quiz-progress-bar">
+                <div class="quiz-progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <div class="quiz-progress-text">
+                <span>Soal ${currentQuestion + 1} dari ${questions.length}</span>
+                <span>Skor: ${score}</span>
+            </div>
+        </div>
         
-        if (timeLeft <= 0) {
-            endQuiz();
-        }
-    }, 1000);
+        <div class="quiz-question">
+            <div class="quiz-question-num">PERTANYAAN ${currentQuestion + 1}</div>
+            <div class="quiz-question-text">${q.question}</div>
+        </div>
+        
+        <div class="quiz-options">
+            ${q.options.map((opt, idx) => `
+                <div class="quiz-option" onclick="selectAnswer(${idx})" data-idx="${idx}">
+                    <span class="quiz-option-letter">${letters[idx]}</span>
+                    <span class="quiz-option-text">${opt}</span>
+                </div>
+            `).join('')}
+        </div>
+        
+        <div class="quiz-actions">
+            <button type="button" class="quiz-btn quiz-btn-primary" id="btnNext" onclick="nextQuestion()" disabled>
+                ${currentQuestion === questions.length - 1 ? 'Lihat Hasil' : 'Selanjutnya'}
+            </button>
+        </div>
+    `;
 }
 
-// ===== End Quiz =====
-function endQuiz() {
-    clearInterval(timer);
-    quizQuestions_el.style.display = 'none';
-    quizResult.style.display = 'block';
+function selectAnswer(idx) {
+    if (selectedAnswer !== null) return; // Already answered
     
-    const wrongAnswers = quizQuestions.length - correctAnswers;
+    selectedAnswer = idx;
+    const q = questions[currentQuestion];
+    const isCorrect = idx === q.answer;
     
-    document.getElementById('scoreValue').textContent = score;
-    document.getElementById('correctCount').textContent = correctAnswers;
-    document.getElementById('wrongCount').textContent = wrongAnswers;
+    if (isCorrect) score += 20;
     
-    const resultIcon = document.getElementById('resultIcon');
-    const resultTitle = document.getElementById('resultTitle');
-    const resultMessage = document.getElementById('resultMessage');
+    userAnswers.push({
+        question: q.question,
+        selected: idx,
+        correct: q.answer,
+        isCorrect
+    });
     
-    if (score >= 40) {
-        resultIcon.textContent = '🏆';
-        resultTitle.textContent = 'Luar Biasa!';
-        resultMessage.textContent = 'Kamu sangat update dengan berita Sumut!';
-    } else if (score >= 30) {
-        resultIcon.textContent = '🎉';
-        resultTitle.textContent = 'Bagus!';
-        resultMessage.textContent = 'Pengetahuanmu tentang berita Sumut cukup baik!';
+    // Update UI
+    document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+        opt.style.pointerEvents = 'none';
+        if (i === q.answer) {
+            opt.classList.add('correct');
+        } else if (i === idx && !isCorrect) {
+            opt.classList.add('wrong');
+        }
+    });
+    
+    document.getElementById('btnNext').disabled = false;
+}
+
+function nextQuestion() {
+    if (selectedAnswer === null) return;
+    
+    currentQuestion++;
+    selectedAnswer = null;
+    
+    if (currentQuestion >= questions.length) {
+        showResult();
     } else {
-        resultIcon.textContent = '💪';
-        resultTitle.textContent = 'Terus Belajar!';
-        resultMessage.textContent = 'Baca lebih banyak berita untuk meningkatkan skormu!';
+        renderQuestion();
     }
 }
 
-// ===== Retry =====
-document.getElementById('btnRetry')?.addEventListener('click', () => {
-    quizResult.style.display = 'none';
-    quizStart.style.display = 'block';
+function showResult() {
+    const correct = userAnswers.filter(a => a.isCorrect).length;
+    const emoji = score >= 80 ? '🏆' : score >= 60 ? '🎉' : score >= 40 ? '👍' : '💪';
+    const message = score >= 80 ? 'Luar biasa!' : score >= 60 ? 'Bagus sekali!' : score >= 40 ? 'Lumayan!' : 'Tetap semangat!';
+    
+    // Save to Firebase
+    saveResult(correct);
+    
+    document.getElementById('quizContainer').innerHTML = `
+        <div class="quiz-result">
+            <div class="quiz-result-icon">${emoji}</div>
+            <h2>${message}</h2>
+            <div class="quiz-result-score">${score}</div>
+            <div class="quiz-result-detail">
+                Kamu menjawab ${correct} dari ${questions.length} soal dengan benar
+            </div>
+            <div class="quiz-result-actions">
+                <a href="./leaderboard/" class="btn-leaderboard">Lihat Peringkat</a>
+                <a href="../" class="btn-home">Kembali ke Beranda</a>
+            </div>
+        </div>
+    `;
+}
+
+async function saveResult(correct) {
+    const today = getTodayDate();
+    const oderId = currentUser.id || currentUser.email.replace(/[.@]/g, '_');
+    
+    // Save today's result
+    const resultData = {
+        oderId,
+        name: currentUser.name,
+        email: currentUser.email,
+        picture: currentUser.picture || '',
+        score,
+        correct,
+        total: questions.length,
+        date: today,
+        timestamp: new Date().toISOString()
+    };
+    
+    await quizDb.ref('quizResults/' + oderId + '_' + today).set(resultData);
+    
+    // Update leaderboard
+    const leaderboardRef = quizDb.ref('quizLeaderboard/' + oderId);
+    leaderboardRef.once('value', async (snapshot) => {
+        const existing = snapshot.val();
+        if (existing) {
+            await leaderboardRef.update({
+                totalScore: existing.totalScore + score,
+                quizCount: existing.quizCount + 1,
+                lastPlayed: today
+            });
+        } else {
+            await leaderboardRef.set({
+                oderId,
+                name: currentUser.name,
+                email: currentUser.email,
+                picture: currentUser.picture || '',
+                totalScore: score,
+                quizCount: 1,
+                lastPlayed: today
+            });
+        }
+    });
+}
+
+// Listen for login changes
+window.addEventListener('storage', (e) => {
+    if (e.key === 'googleUser') {
+        checkLoginStatus();
+    }
+});
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    initFirebase();
+    setTimeout(checkLoginStatus, 500);
 });

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Peringkat Quiz - MarendalSatu</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        .lb-page { padding: 30px 0; max-width: 800px; margin: 0 auto; }
+        
+        .lb-header { 
+            text-align: center; 
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #2d8a4e 0%, #1e6b3a 100%);
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(45, 138, 78, 0.3);
+        }
+        .lb-header h1 { font-size: 1.6rem; color: #fff; margin-bottom: 8px; }
+        .lb-header p { color: rgba(255,255,255,0.85); font-size: 0.95rem; }
+        
+        /* Top 3 */
+        .lb-top3 { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin-bottom: 30px; }
+        
+        .lb-top-item {
+            text-align: center; padding: 20px 15px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; width: 140px;
+        }
+        .lb-top-item.rank-1 { order: 2; transform: scale(1.1); border-color: #fbbf24; background: linear-gradient(135deg, #fef3c7, #fde68a); }
+        .lb-top-item.rank-2 { order: 1; }
+        .lb-top-item.rank-3 { order: 3; }
+        
+        .lb-top-rank { font-size: 1.5rem; margin-bottom: 10px; }
+        .lb-top-avatar { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 10px; object-fit: cover; border: 3px solid var(--border); }
+        .lb-top-item.rank-1 .lb-top-avatar { border-color: #fbbf24; }
+        .lb-top-item.rank-2 .lb-top-avatar { border-color: #9ca3af; }
+        .lb-top-item.rank-3 .lb-top-avatar { border-color: #d97706; }
+        .lb-top-name { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lb-top-score { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+        .lb-top-count { font-size: 0.75rem; color: var(--text-muted); }
+        
+        /* List */
+        .lb-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .lb-list-header {
+            display: grid; grid-template-columns: 50px 1fr 100px 80px;
+            padding: 12px 20px; background: var(--bg-body);
+            font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        .lb-item {
+            display: grid; grid-template-columns: 50px 1fr 100px 80px;
+            padding: 15px 20px; align-items: center;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        .lb-item:last-child { border-bottom: none; }
+        .lb-item:hover { background: var(--bg-body); }
+        .lb-item.current-user { background: var(--primary-light); }
+        
+        .lb-rank { font-weight: 700; color: var(--text-dark); font-size: 0.95rem; }
+        .lb-rank.gold { color: #fbbf24; }
+        .lb-rank.silver { color: #9ca3af; }
+        .lb-rank.bronze { color: #d97706; }
+        
+        .lb-user { display: flex; align-items: center; gap: 12px; }
+        .lb-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+        .lb-name { font-weight: 500; color: var(--text-dark); font-size: 0.9rem; }
+        
+        .lb-score { font-weight: 700; color: var(--primary); font-size: 1rem; }
+        .lb-count { font-size: 0.85rem; color: var(--text-muted); }
+        
+        /* Login Required */
+        .lb-login {
+            text-align: center; padding: 60px 20px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+        }
+        .lb-login-icon { font-size: 3rem; margin-bottom: 15px; }
+        .lb-login h2 { font-size: 1.2rem; color: var(--text-dark); margin-bottom: 10px; }
+        .lb-login p { color: var(--text-muted); margin-bottom: 20px; }
+        .lb-login-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 12px 24px; background: #fff; border: 1px solid #ddd;
+            border-radius: 8px; font-size: 0.95rem; cursor: pointer;
+        }
+        .lb-login-btn:hover { background: #f5f5f5; }
+        .lb-login-btn img { width: 20px; height: 20px; }
+        
+        .lb-empty { text-align: center; padding: 40px; color: var(--text-muted); }
+        .lb-loading { text-align: center; padding: 40px; color: var(--text-muted); }
+        
+        .lb-back { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); font-size: 0.9rem; margin-bottom: 20px; text-decoration: none; }
+        .lb-back:hover { text-decoration: underline; }
+        
+        /* Dark Mode */
+        [data-theme="dark"] .lb-card { background: #111; border-color: #222; }
+        [data-theme="dark"] .lb-header h1, [data-theme="dark"] .lb-top-name, 
+        [data-theme="dark"] .lb-name, [data-theme="dark"] .lb-rank,
+        [data-theme="dark"] .lb-login h2 { color: #fff; }
+        [data-theme="dark"] .lb-list-header { background: #0a0a0a; }
+        [data-theme="dark"] .lb-item { border-color: #222; }
+        [data-theme="dark"] .lb-item:hover { background: #1a1a1a; }
+        [data-theme="dark"] .lb-item.current-user { background: #1a2e1a; }
+        [data-theme="dark"] .lb-top-item { background: #111; border-color: #222; }
+        [data-theme="dark"] .lb-top-item.rank-1 { background: linear-gradient(135deg, #422006, #78350f); }
+        [data-theme="dark"] .lb-login { background: #111; border-color: #222; }
+        [data-theme="dark"] .lb-login-btn { background: #222; border-color: #333; color: #fff; }
+        
+        @media (max-width: 768px) {
+            .lb-page { padding: 20px 15px; }
+            .lb-header h1 { font-size: 1.3rem; }
+            .lb-top3 { gap: 10px; }
+            .lb-top-item { width: 100px; padding: 15px 10px; }
+            .lb-top-item.rank-1 { transform: scale(1.05); }
+            .lb-top-avatar { width: 40px; height: 40px; }
+            .lb-top-name { font-size: 0.75rem; }
+            .lb-list-header { display: none; }
+            .lb-item { grid-template-columns: 40px 1fr auto; gap: 10px; padding: 12px 15px; }
+            .lb-item .lb-count { display: none; }
+            .lb-avatar { width: 32px; height: 32px; }
+            .lb-name { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="g_id_onload"
+         data-client_id="830162422312-5h3nq1bohtktfhg4ksodt0jjsbeuria9.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+
+    <div class="page-loader" id="pageLoader">
+        <span class="loader"></span>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="../../">
+                        <span class="logo-text">Marendal<span class="logo-accent">Satu</span></span>
+                    </a>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <button type="submit" title="Cari">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                            </svg>
+                        </button>
+                        <input type="text" placeholder="Cari berita...">
+                    </div>
+                    <div id="authContainer"></div>
+                    <button type="button" class="theme-toggle" id="themeToggle" title="Ganti Tema">
+                        <span class="theme-icon light">☀️</span>
+                        <span class="theme-icon dark">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="navbar">
+            <div class="container">
+                <ul class="nav-menu" id="navMenu">
+                    <li class="nav-item"><a href="../../">BERANDA</a></li>
+                    <li class="nav-item"><a href="../../berita/">BERITA</a></li>
+                    <li class="nav-item"><a href="../../umkm/">UMKM</a></li>
+                    <li class="nav-item"><a href="../../event/">EVENT</a></li>
+                    <li class="nav-item"><a href="../../kirim-berita/">KIRIM BERITA</a></li>
+                    <li class="nav-item has-submenu active">
+                        <a href="../">QUIZ BERITA</a>
+                        <ul class="submenu">
+                            <li><a href="../">Quiz Harian</a></li>
+                            <li><a href="./">Papan Peringkat</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="../../tentang-kami/">TENTANG KAMI</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="lb-page">
+                <a href="../" class="lb-back">← Kembali ke Quiz</a>
+                
+                <div class="lb-header">
+                    <h1>🏆 Papan Peringkat</h1>
+                    <p>Top pemain quiz berita MarendalSatu</p>
+                </div>
+                
+                <div id="leaderboardContainer">
+                    <div class="lb-loading">Memuat data...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-main">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <span class="logo-text">Marendal<span class="logo-accent">Satu</span></span>
+                        <p>Media berita terpercaya untuk masyarakat Sumatera Utara.</p>
+                    </div>
+                    <div class="footer-column">
+                        <h4 class="footer-title">Kategori</h4>
+                        <ul class="footer-links">
+                            <li><a href="../../berita/">Berita</a></li>
+                            <li><a href="../../umkm/">UMKM</a></li>
+                            <li><a href="../../event/">Event</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4 class="footer-title">Layanan</h4>
+                        <ul class="footer-links">
+                            <li><a href="../../kirim-berita/">Kirim Berita</a></li>
+                            <li><a href="../">Quiz Berita</a></li>
+                            <li><a href="./">Papan Peringkat</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4 class="footer-title">Tentang</h4>
+                        <ul class="footer-links">
+                            <li><a href="../../tentang-kami/">Tentang Kami</a></li>
+                            <li><a href="#">Kontak</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 MarendalSatu. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="../../js/main.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAAjCd2CvsfiRCVWcwNSmjNt_w3N4eVSbM",
+            databaseURL: "https://login-fe9bf-default-rtdb.firebaseio.com",
+            projectId: "login-fe9bf"
+        };
+        
+        let lbApp, lbDb;
+        let currentUser = null;
+        
+        function initFirebase() {
+            try { lbApp = firebase.app('lbApp'); }
+            catch (e) { lbApp = firebase.initializeApp(firebaseConfig, 'lbApp'); }
+            lbDb = lbApp.database();
+        }
+        
+        function checkLogin() {
+            const userData = localStorage.getItem('googleUser');
+            if (userData) {
+                currentUser = JSON.parse(userData);
+                loadLeaderboard();
+            } else {
+                showLoginRequired();
+            }
+        }
+        
+        function showLoginRequired() {
+            document.getElementById('leaderboardContainer').innerHTML = `
+                <div class="lb-login">
+                    <div class="lb-login-icon">🔐</div>
+                    <h2>Login Diperlukan</h2>
+                    <p>Silakan login untuk melihat papan peringkat</p>
+                    <button type="button" class="lb-login-btn" onclick="showLoginModal()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                        Login dengan Google
+                    </button>
+                </div>
+            `;
+        }
+        
+        function loadLeaderboard() {
+            lbDb.ref('quizLeaderboard').orderByChild('totalScore').once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    showEmpty();
+                    return;
+                }
+                
+                // Convert to array and sort descending
+                const users = Object.values(data).sort((a, b) => b.totalScore - a.totalScore);
+                renderLeaderboard(users);
+            });
+        }
+        
+        function showEmpty() {
+            document.getElementById('leaderboardContainer').innerHTML = `
+                <div class="lb-card">
+                    <div class="lb-empty">
+                        <p>Belum ada data peringkat</p>
+                        <a href="../" style="color:var(--primary);">Mulai Quiz Sekarang →</a>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderLeaderboard(users) {
+            const currentOderId = currentUser.id || currentUser.email.replace(/[.@]/g, '_');
+            const top3 = users.slice(0, 3);
+            const rest = users.slice(3);
+            
+            let html = '';
+            
+            // Top 3
+            if (top3.length > 0) {
+                html += '<div class="lb-top3">';
+                top3.forEach((user, idx) => {
+                    const rank = idx + 1;
+                    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+                    const avatar = user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=2d8a4e&color=fff`;
+                    html += `
+                        <div class="lb-top-item rank-${rank}">
+                            <div class="lb-top-rank">${medal}</div>
+                            <img src="${avatar}" alt="${escapeHtml(user.name)}" class="lb-top-avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=ccc&color=666'">
+                            <div class="lb-top-name">${escapeHtml(user.name)}</div>
+                            <div class="lb-top-score">${user.totalScore}</div>
+                            <div class="lb-top-count">${user.quizCount}x main</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Rest of list
+            html += `
+                <div class="lb-card">
+                    <div class="lb-list-header">
+                        <span>#</span>
+                        <span>Pemain</span>
+                        <span>Skor</span>
+                        <span>Quiz</span>
+                    </div>
+            `;
+            
+            users.forEach((user, idx) => {
+                const rank = idx + 1;
+                const isCurrentUser = user.oderId === currentOderId;
+                const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+                const avatar = user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=2d8a4e&color=fff`;
+                
+                html += `
+                    <div class="lb-item ${isCurrentUser ? 'current-user' : ''}">
+                        <span class="lb-rank ${rankClass}">${rank}</span>
+                        <div class="lb-user">
+                            <img src="${avatar}" alt="${escapeHtml(user.name)}" class="lb-avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=ccc&color=666'">
+                            <span class="lb-name">${escapeHtml(user.name)}${isCurrentUser ? ' (Kamu)' : ''}</span>
+                        </div>
+                        <span class="lb-score">${user.totalScore}</span>
+                        <span class="lb-count">${user.quizCount}x</span>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            document.getElementById('leaderboardContainer').innerHTML = html;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'googleUser') checkLogin();
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            setTimeout(checkLogin, 500);
+        });
+    </script>
+</body>
+</html>
