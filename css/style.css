@@ -161,14 +161,7 @@ img {
   background: var(--light-gray);
   border-radius: 20px;
   padding: 6px 12px;
-}
-
-.search-box input {
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 0.9rem;
-  width: 180px;
+  gap: 8px;
 }
 
 .search-box button {
@@ -178,6 +171,15 @@ img {
   color: var(--medium-gray);
   display: flex;
   align-items: center;
+  order: -1;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.9rem;
+  width: 180px;
 }
 
 .date-time {
@@ -365,12 +367,12 @@ img {
   }
 
   .weather-ticker .ticker-content {
-    animation-duration: 12s;
+    animation-duration: 30s;
   }
 
   .weather-ticker .ticker-item {
     font-size: 0.75rem;
-    padding-right: 25px;
+    padding-right: 30px;
   }
 
   .weather-update {
@@ -977,38 +979,83 @@ img {
     padding: 0 12px;
   }
 
-  /* Header Mobile - Compact */
+  /* Header Mobile - 2 rows layout */
   .header-top {
-    padding: 8px 0;
+    padding: 10px 0;
   }
   
   .header-top .container {
-    flex-direction: row;
+    display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
+    align-items: center;
+    row-gap: 10px;
+  }
+  
+  /* Row 1: Logo left, auth+toggle right */
+  .logo {
+    order: 1;
+    flex-shrink: 0;
   }
   
   .logo-text {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
 
   .header-right {
-    gap: 6px;
-    overflow: visible;
-    flex-shrink: 0;
+    order: 2;
+    display: contents;
   }
   
   .date-time {
     display: none;
   }
 
-  .search-box {
-    display: none;
+  /* Auth & Toggle grouped right */
+  #authContainer {
+    order: 2;
+    margin-left: auto;
+  }
+  
+  #authContainer .btn-login {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
+  
+  .user-menu img {
+    width: 32px;
+    height: 32px;
   }
   
   .theme-toggle {
+    order: 3;
+    width: 44px;
+    height: 26px;
     flex-shrink: 0;
-    width: 38px;
-    height: 24px;
+    margin-left: 8px;
+  }
+
+  /* Search bar - Row 2, full width */
+  .search-box {
+    order: 4;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 25px;
+    gap: 10px;
+  }
+  
+  .search-box button {
+    order: -1;
+  }
+  
+  .search-box input {
+    width: 100%;
+    font-size: 14px;
+  }
+  
+  .search-box button svg {
+    width: 18px;
+    height: 18px;
   }
 
   /* Navbar Mobile - Horizontal scroll */
