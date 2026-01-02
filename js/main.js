@@ -91,6 +91,10 @@ function initSubmenu() {
             e.preventDefault();
             e.stopPropagation();
             
+            // Tutup user dropdown jika ada
+            const userDropdown = document.getElementById('userDropdown');
+            if (userDropdown) userDropdown.classList.remove('active');
+            
             const isOpen = item.classList.contains('active');
             
             // Close all submenus first

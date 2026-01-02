@@ -54,9 +54,17 @@ function getTodayDate() {
 
 function checkLoginStatus() {
     const userData = localStorage.getItem('googleUser');
+    console.log('Quiz: Checking login status...', userData ? 'Found user' : 'No user');
+    
     if (userData) {
-        currentUser = JSON.parse(userData);
-        checkTodayQuiz();
+        try {
+            currentUser = JSON.parse(userData);
+            console.log('Quiz: User logged in:', currentUser.name);
+            checkTodayQuiz();
+        } catch (e) {
+            console.error('Quiz: Error parsing user data', e);
+            showLoginRequired();
+        }
     } else {
         showLoginRequired();
     }
@@ -292,8 +300,16 @@ window.addEventListener('storage', (e) => {
     }
 });
 
+// Listen for custom login event from auth.js
+window.addEventListener('userLoggedIn', () => {
+    checkLoginStatus();
+});
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     initFirebase();
-    setTimeout(checkLoginStatus, 500);
+    // Check multiple times to ensure we catch the login state
+    checkLoginStatus();
+    setTimeout(checkLoginStatus, 300);
+    setTimeout(checkLoginStatus, 800);
 });

@@ -67,6 +67,9 @@ function handleCredentialResponse(response) {
     
     updateAuthUI();
     
+    // Dispatch custom event for other scripts
+    window.dispatchEvent(new CustomEvent('userLoggedIn', { detail: currentUser }));
+    
     // Close login modal if open
     closeLoginModal();
     
@@ -143,6 +146,11 @@ function getBasePath() {
 function toggleUserDropdown() {
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) {
+        // Tutup submenu navbar jika ada
+        document.querySelectorAll('.has-submenu.active').forEach(item => {
+            item.classList.remove('active');
+        });
+        
         dropdown.classList.toggle('active');
     }
 }
