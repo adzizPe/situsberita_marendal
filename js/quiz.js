@@ -308,8 +308,20 @@ window.addEventListener('userLoggedIn', () => {
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     initFirebase();
-    // Check multiple times to ensure we catch the login state
-    checkLoginStatus();
-    setTimeout(checkLoginStatus, 300);
-    setTimeout(checkLoginStatus, 800);
+    
+    // Check login dengan interval sampai berhasil atau timeout
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const checkLogin = () => {
+        const userData = localStorage.getItem('googleUser');
+        if (userData || attempts >= maxAttempts) {
+            checkLoginStatus();
+        } else {
+            attempts++;
+            setTimeout(checkLogin, 200);
+        }
+    };
+    
+    checkLogin();
 });

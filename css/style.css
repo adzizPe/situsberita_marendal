@@ -7569,6 +7569,7 @@ img {
 
 .user-menu {
   position: relative;
+  z-index: 100002;
 }
 
 .user-btn {
