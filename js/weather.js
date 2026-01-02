@@ -1,11 +1,11 @@
 // BMKG Weather API Integration
 const BMKG_LOCATIONS = [
+    { name: 'Marindal I', adm4: '12.71.11.1003' },
     { name: 'Medan', adm4: '12.71.01.1001' },
     { name: 'Aceh Tamiang', adm4: '11.13.01.2001' },
     { name: 'Binjai', adm4: '12.75.01.1001' },
     { name: 'Deli Serdang', adm4: '12.07.01.2001' },
     { name: 'Banda Aceh', adm4: '11.71.01.1001' },
-    { name: 'Marindal I', adm4: '12.71.11.1003' },
     { name: 'Marindal II', adm4: '12.71.11.1004' }
 ];
 
