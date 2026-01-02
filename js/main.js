@@ -73,34 +73,55 @@ function initNavScroll() {
     }, { passive: true });
 }
 
-// ===== Submenu Toggle for Mobile =====
+// ===== Submenu Toggle =====
 function initSubmenu() {
     const hasSubmenu = document.querySelectorAll('.has-submenu');
     
+    // Pastikan submenu tertutup saat halaman load
     hasSubmenu.forEach(item => {
-        const link = item.querySelector('a');
+        item.classList.remove('active');
+    });
+    
+    hasSubmenu.forEach(item => {
+        const link = item.querySelector(':scope > a');
+        const submenu = item.querySelector('.submenu');
+        const submenuLinks = submenu ? submenu.querySelectorAll('a') : [];
         
         link.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
-                e.preventDefault();
-                item.classList.toggle('active');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isOpen = item.classList.contains('active');
+            
+            // Close all submenus first
+            hasSubmenu.forEach(other => {
+                other.classList.remove('active');
+            });
+            
+            // Open this one if it was closed
+            if (!isOpen) {
+                item.classList.add('active');
                 
-                // Close other submenus
-                hasSubmenu.forEach(other => {
-                    if (other !== item) {
-                        other.classList.remove('active');
-                    }
-                });
+                // Position submenu on mobile
+                if (window.innerWidth <= 768 && submenu) {
+                    const rect = link.getBoundingClientRect();
+                    submenu.style.top = (rect.bottom + 5) + 'px';
+                }
             }
+        });
+        
+        // Tutup submenu saat link di dalam submenu diklik
+        submenuLinks.forEach(subLink => {
+            subLink.addEventListener('click', () => {
+                item.classList.remove('active');
+            });
         });
     });
 
     // Close submenu when clicking outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.has-submenu')) {
-            hasSubmenu.forEach(item => {
-                item.classList.remove('active');
-            });
+            hasSubmenu.forEach(item => item.classList.remove('active'));
         }
     });
 }
