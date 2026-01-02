@@ -115,28 +115,150 @@ function initTicker() {
     ticker.innerHTML = items + items;
 }
 
-// ===== Search Box =====
+// ===== Search Box - Global Search with Firebase =====
+let searchNewsData = [];
+let searchTimeout = null;
+
 function initSearch() {
-    const searchBox = document.querySelector('.search-box');
-    if (!searchBox) return;
+    const searchBoxes = document.querySelectorAll('.search-box');
     
-    const input = searchBox.querySelector('input');
-    const button = searchBox.querySelector('button');
-    
-    button.addEventListener('click', () => {
-        const query = input.value.trim();
-        if (query) {
-            // Redirect to search page (implement as needed)
-            console.log('Searching for:', query);
-            // window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+    searchBoxes.forEach(searchBox => {
+        const input = searchBox.querySelector('input');
+        const button = searchBox.querySelector('button');
+        
+        if (!input) return;
+        
+        // Create dropdown for results
+        let dropdown = searchBox.querySelector('.search-dropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.className = 'search-dropdown';
+            searchBox.appendChild(dropdown);
         }
+        
+        // Load news data for search
+        loadSearchData();
+        
+        // Input event - live search
+        input.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            const query = input.value.trim().toLowerCase();
+            
+            if (query.length < 2) {
+                dropdown.innerHTML = '';
+                dropdown.classList.remove('active');
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                const results = searchNewsData.filter(news => 
+                    news.judul.toLowerCase().includes(query) ||
+                    news.lokasi.toLowerCase().includes(query) ||
+                    (news.deskripsi && news.deskripsi.toLowerCase().includes(query))
+                ).slice(0, 5);
+                
+                if (results.length > 0) {
+                    dropdown.innerHTML = results.map(news => `
+                        <a href="${getBeritaUrl()}?${news.slug || news.id}" class="search-result-item">
+                            <span class="search-result-title">${highlightMatch(news.judul, query)}</span>
+                            <span class="search-result-meta">${news.lokasi} • ${news.kategori}</span>
+                        </a>
+                    `).join('') + `
+                        <a href="${getBeritaUrl()}?q=${encodeURIComponent(input.value.trim())}" class="search-result-all">
+                            Lihat semua hasil untuk "${input.value.trim()}"
+                        </a>
+                    `;
+                    dropdown.classList.add('active');
+                } else {
+                    dropdown.innerHTML = '<div class="search-no-result">Tidak ada hasil</div>';
+                    dropdown.classList.add('active');
+                }
+            }, 300);
+        });
+        
+        // Button click - go to search page
+        button.addEventListener('click', () => {
+            const query = input.value.trim();
+            if (query) {
+                window.location.href = `${getBeritaUrl()}?q=${encodeURIComponent(query)}`;
+            }
+        });
+        
+        // Enter key
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = input.value.trim();
+                if (query) {
+                    window.location.href = `${getBeritaUrl()}?q=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchBox.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+        
+        // Focus - show dropdown if has results
+        input.addEventListener('focus', () => {
+            if (dropdown.innerHTML && input.value.length >= 2) {
+                dropdown.classList.add('active');
+            }
+        });
     });
-    
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            button.click();
+}
+
+function getBeritaUrl() {
+    const path = window.location.pathname;
+    if (path.includes('/berita/')) return './';
+    if (path.includes('/umkm/') || path.includes('/kirim-berita/') || path.includes('/tentang-kami/')) return '../berita/';
+    return 'berita/';
+}
+
+function loadSearchData() {
+    // Check if Firebase is available
+    const checkFirebase = setInterval(() => {
+        if (typeof firebase !== 'undefined') {
+            clearInterval(checkFirebase);
+            
+            try {
+                let app;
+                try { app = firebase.app('searchApp'); }
+                catch (e) {
+                    app = firebase.initializeApp({
+                        apiKey: "AIzaSyAAjCd2CvsfiRCVWcwNSmjNt_w3N4eVSbM",
+                        databaseURL: "https://login-fe9bf-default-rtdb.firebaseio.com",
+                        projectId: "login-fe9bf"
+                    }, 'searchApp');
+                }
+                
+                const db = app.database();
+                db.ref('newsSubmissions').on('value', (snapshot) => {
+                    searchNewsData = [];
+                    if (snapshot.exists()) {
+                        snapshot.forEach((child) => {
+                            const news = child.val();
+                            if (news.status === 'approved') {
+                                searchNewsData.push(news);
+                            }
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Search Firebase error:', err);
+            }
         }
-    });
+    }, 500);
+    
+    // Timeout after 10 seconds
+    setTimeout(() => clearInterval(checkFirebase), 10000);
+}
+
+function highlightMatch(text, query) {
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
 }
 
 // ===== Smooth Scroll =====
