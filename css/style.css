@@ -122,10 +122,12 @@ img {
   top: 0;
   z-index: 100000;
   border-bottom: 1px solid var(--border);
+  overflow: visible;
 }
 
 .header-top {
   padding: 12px 0;
+  overflow: visible;
 }
 
 .header-top .container {
@@ -989,6 +991,7 @@ img {
   /* Header Mobile - 2 rows layout */
   .header-top {
     padding: 10px 0;
+    overflow: visible;
   }
   
   .header-top .container {
@@ -997,6 +1000,7 @@ img {
     justify-content: space-between;
     align-items: center;
     row-gap: 10px;
+    overflow: visible;
   }
   
   /* Row 1: Logo left, auth+toggle right */
@@ -9155,6 +9159,7 @@ a.news-card-image video {
 /* ===== Global Search Dropdown ===== */
 .search-box {
     position: relative;
+    z-index: 100001;
 }
 
 .search-dropdown {
@@ -9167,9 +9172,10 @@ a.news-card-image video {
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     margin-top: 8px;
     display: none;
-    z-index: 1000;
+    z-index: 100002;
     max-height: 400px;
     overflow-y: auto;
+    min-width: 300px;
 }
 
 .search-dropdown.active {
@@ -9262,14 +9268,35 @@ a.news-card-image video {
 
 /* Mobile search dropdown */
 @media (max-width: 768px) {
+    .search-box {
+        z-index: 100001;
+        position: relative;
+    }
+    
+    .search-box input {
+        pointer-events: auto;
+        -webkit-user-select: text;
+        user-select: text;
+    }
+    
     .search-dropdown {
         position: fixed;
-        top: auto;
+        top: 130px;
         left: 10px;
         right: 10px;
         bottom: auto;
-        margin-top: 10px;
-        max-height: 60vh;
+        margin-top: 0;
+        max-height: 50vh;
+        z-index: 100002;
+        pointer-events: auto;
+    }
+    
+    .search-dropdown.active {
+        display: block;
+    }
+    
+    .search-result-item {
+        pointer-events: auto;
     }
 }
 

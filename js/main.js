@@ -226,6 +226,15 @@ function initSearch() {
             }
         });
         
+        // Touch support for mobile
+        input.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        });
+        
+        dropdown.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        });
+        
         // Focus - show dropdown if has results
         input.addEventListener('focus', () => {
             if (dropdown.innerHTML && input.value.length >= 2) {
@@ -237,9 +246,12 @@ function initSearch() {
 
 function getBeritaUrl() {
     const path = window.location.pathname;
+    if (path.includes('/berita/detail/')) return './';
+    if (path.includes('/berita/') && !path.endsWith('/berita/')) return '../';
     if (path.includes('/berita/')) return './';
-    if (path.includes('/umkm/') || path.includes('/kirim-berita/') || path.includes('/tentang-kami/')) return '../berita/';
-    return 'berita/';
+    if (path.includes('/quiz/leaderboard/')) return '../../berita/';
+    if (path.includes('/quiz/') || path.includes('/umkm/') || path.includes('/kirim-berita/') || path.includes('/kirim-event/') || path.includes('/tentang-kami/') || path.includes('/event/')) return '../berita/';
+    return './berita/';
 }
 
 function loadSearchData() {
