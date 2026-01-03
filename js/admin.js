@@ -535,6 +535,7 @@ function renderQuizLeaderboard(players) {
                 <div class="adm-lb-info">
                     <div class="adm-lb-name">${escapeHtml(player.name)}</div>
                     <div class="adm-lb-email">${escapeHtml(player.email)}</div>
+                    ${player.whatsapp ? `<div class="adm-lb-wa"><a href="https://wa.me/${player.whatsapp.replace('+', '')}" target="_blank">📱 ${escapeHtml(player.whatsapp)}</a></div>` : '<div class="adm-lb-wa" style="color:#999;">📱 Belum ada WA</div>'}
                 </div>
                 <div style="text-align:right;display:flex;align-items:center;gap:15px;">
                     <div>

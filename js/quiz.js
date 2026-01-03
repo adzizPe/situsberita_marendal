@@ -60,7 +60,8 @@ function checkLoginStatus() {
         try {
             quizCurrentUser = JSON.parse(userData);
             console.log('Quiz: User logged in:', quizCurrentUser.name);
-            checkTodayQuiz();
+            // Check if user has WhatsApp number
+            checkWhatsAppNumber();
         } catch (e) {
             console.error('Quiz: Error parsing user data', e);
             showLoginRequired();
@@ -69,6 +70,70 @@ function checkLoginStatus() {
         showLoginRequired();
     }
 }
+
+function checkWhatsAppNumber() {
+    const oderId = quizCurrentUser.id || quizCurrentUser.email.replace(/[.@]/g, '_');
+    
+    quizDb.ref('quizLeaderboard/' + oderId + '/whatsapp').once('value', (snapshot) => {
+        const whatsapp = snapshot.val();
+        if (whatsapp) {
+            quizCurrentUser.whatsapp = whatsapp;
+            checkTodayQuiz();
+        } else {
+            showWhatsAppForm();
+        }
+    });
+}
+
+function showWhatsAppForm() {
+    document.getElementById('quizContainer').innerHTML = `
+        <div class="quiz-wa-form">
+            <div class="quiz-wa-icon">📱</div>
+            <h2>Lengkapi Data</h2>
+            <p>Masukkan nomor WhatsApp untuk bisa dihubungi jika menang hadiah mingguan</p>
+            <form onsubmit="saveWhatsAppNumber(event)">
+                <div class="quiz-wa-input">
+                    <span class="quiz-wa-prefix">+62</span>
+                    <input type="tel" id="waNumber" placeholder="8123456789" pattern="[0-9]{9,13}" required>
+                </div>
+                <p class="quiz-wa-hint">Contoh: 81234567890 (tanpa 0 di depan)</p>
+                <button type="submit" class="quiz-wa-btn">Simpan & Mulai Quiz</button>
+            </form>
+        </div>
+    `;
+}
+
+async function saveWhatsAppNumber(e) {
+    e.preventDefault();
+    const waInput = document.getElementById('waNumber').value.trim();
+    
+    if (!waInput || waInput.length < 9) {
+        alert('Nomor WhatsApp tidak valid');
+        return;
+    }
+    
+    const whatsapp = '+62' + waInput.replace(/^0+/, '');
+    const oderId = quizCurrentUser.id || quizCurrentUser.email.replace(/[.@]/g, '_');
+    
+    try {
+        // Save to leaderboard
+        await quizDb.ref('quizLeaderboard/' + oderId).update({
+            oderId,
+            name: quizCurrentUser.name,
+            email: quizCurrentUser.email,
+            picture: quizCurrentUser.picture || '',
+            whatsapp: whatsapp,
+            totalScore: 0,
+            quizCount: 0
+        });
+        
+        quizCurrentUser.whatsapp = whatsapp;
+        checkTodayQuiz();
+    } catch (err) {
+        alert('Gagal menyimpan: ' + err.message);
+    }
+}
+window.saveWhatsAppNumber = saveWhatsAppNumber;
 
 function showLoginRequired() {
     document.getElementById('quizContainer').innerHTML = `
@@ -260,6 +325,7 @@ async function saveResult(correct) {
         name: quizCurrentUser.name,
         email: quizCurrentUser.email,
         picture: quizCurrentUser.picture || '',
+        whatsapp: quizCurrentUser.whatsapp || '',
         score,
         correct,
         total: questions.length,
@@ -285,6 +351,7 @@ async function saveResult(correct) {
                 name: quizCurrentUser.name,
                 email: quizCurrentUser.email,
                 picture: quizCurrentUser.picture || '',
+                whatsapp: quizCurrentUser.whatsapp || '',
                 totalScore: score,
                 quizCount: 1,
                 lastPlayed: today
