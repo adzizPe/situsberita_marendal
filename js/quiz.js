@@ -6,7 +6,7 @@ const firebaseConfig = {
 };
 
 let quizApp, quizDb;
-let currentUser = null;
+let quizCurrentUser = null; // Renamed to avoid conflict with auth.js
 let questions = [];
 let currentQuestion = 0;
 let selectedAnswer = null;
@@ -58,8 +58,8 @@ function checkLoginStatus() {
     
     if (userData) {
         try {
-            currentUser = JSON.parse(userData);
-            console.log('Quiz: User logged in:', currentUser.name);
+            quizCurrentUser = JSON.parse(userData);
+            console.log('Quiz: User logged in:', quizCurrentUser.name);
             checkTodayQuiz();
         } catch (e) {
             console.error('Quiz: Error parsing user data', e);
@@ -86,7 +86,7 @@ function showLoginRequired() {
 
 function checkTodayQuiz() {
     const today = getTodayDate();
-    const oderId = currentUser.id || currentUser.email.replace(/[.@]/g, '_');
+    const oderId = quizCurrentUser.id || quizCurrentUser.email.replace(/[.@]/g, '_');
     
     quizDb.ref('quizResults/' + oderId + '_' + today).once('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -252,14 +252,14 @@ function showResult() {
 
 async function saveResult(correct) {
     const today = getTodayDate();
-    const oderId = currentUser.id || currentUser.email.replace(/[.@]/g, '_');
+    const oderId = quizCurrentUser.id || quizCurrentUser.email.replace(/[.@]/g, '_');
     
     // Save today's result
     const resultData = {
         oderId,
-        name: currentUser.name,
-        email: currentUser.email,
-        picture: currentUser.picture || '',
+        name: quizCurrentUser.name,
+        email: quizCurrentUser.email,
+        picture: quizCurrentUser.picture || '',
         score,
         correct,
         total: questions.length,
@@ -282,9 +282,9 @@ async function saveResult(correct) {
         } else {
             await leaderboardRef.set({
                 oderId,
-                name: currentUser.name,
-                email: currentUser.email,
-                picture: currentUser.picture || '',
+                name: quizCurrentUser.name,
+                email: quizCurrentUser.email,
+                picture: quizCurrentUser.picture || '',
                 totalScore: score,
                 quizCount: 1,
                 lastPlayed: today

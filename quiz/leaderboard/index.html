@@ -265,7 +265,7 @@
         };
         
         let lbApp, lbDb;
-        let currentUser = null;
+        let lbCurrentUser = null; // Renamed to avoid conflict with auth.js
         
         function initFirebase() {
             try { lbApp = firebase.app('lbApp'); }
@@ -276,7 +276,7 @@
         function checkLogin() {
             const userData = localStorage.getItem('googleUser');
             if (userData) {
-                currentUser = JSON.parse(userData);
+                lbCurrentUser = JSON.parse(userData);
                 loadLeaderboard();
             } else {
                 showLoginRequired();
@@ -323,7 +323,7 @@
         }
         
         function renderLeaderboard(users) {
-            const currentOderId = currentUser.id || currentUser.email.replace(/[.@]/g, '_');
+            const currentOderId = lbCurrentUser.id || lbCurrentUser.email.replace(/[.@]/g, '_');
             const top3 = users.slice(0, 3);
             const rest = users.slice(3);
             
