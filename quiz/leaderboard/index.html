@@ -103,6 +103,21 @@
         .lb-back { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); font-size: 0.9rem; margin-bottom: 20px; text-decoration: none; }
         .lb-back:hover { text-decoration: underline; }
         
+        /* Hadiah */
+        .lb-hadiah {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #fbbf24;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .lb-hadiah-title { font-weight: 600; color: #92400e; margin-bottom: 10px; }
+        .lb-hadiah-items { display: flex; justify-content: center; gap: 30px; margin-bottom: 8px; }
+        .lb-hadiah-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #78350f; }
+        .lb-hadiah-item span { font-size: 1.2rem; }
+        .lb-hadiah-note { font-size: 0.75rem; color: #a16207; }
+        
         /* Dark Mode */
         [data-theme="dark"] .lb-card { background: #111; border-color: #222; }
         [data-theme="dark"] .lb-header h1, [data-theme="dark"] .lb-top-name, 
@@ -202,6 +217,22 @@
                 <div class="lb-header">
                     <h1>🏆 Papan Peringkat</h1>
                     <p>Top pemain quiz berita MarendalSatu</p>
+                </div>
+                
+                <!-- Hadiah Info -->
+                <div class="lb-hadiah">
+                    <div class="lb-hadiah-title">🎁 Hadiah Mingguan</div>
+                    <div class="lb-hadiah-items">
+                        <div class="lb-hadiah-item">
+                            <span>🥇</span>
+                            <div>Pulsa 10K</div>
+                        </div>
+                        <div class="lb-hadiah-item">
+                            <span>🥈</span>
+                            <div>Saldo DANA 10K</div>
+                        </div>
+                    </div>
+                    <div class="lb-hadiah-note">Pemenang diumumkan setiap Minggu</div>
                 </div>
                 
                 <div id="leaderboardContainer">

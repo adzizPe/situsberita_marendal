@@ -202,21 +202,57 @@ function updateStats() {
 }
 
 
+function isVideoUrl(url) {
+    if (!url) return false;
+    const videoExts = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+    const lowerUrl = url.toLowerCase();
+    return videoExts.some(ext => lowerUrl.includes(ext)) || lowerUrl.includes('video');
+}
+
+function renderMediaElement(url, isMain = false) {
+    if (!url) return '<div style="background:#f0f0f0;height:200px;display:flex;align-items:center;justify-content:center;color:#999;">No Media</div>';
+    
+    if (isVideoUrl(url)) {
+        return `<video controls ${isMain ? 'style="width:100%;max-height:400px;border-radius:8px;"' : ''}>
+            <source src="${url}" type="video/mp4">
+            Browser tidak support video.
+        </video>`;
+    }
+    return `<img src="${url}" alt="" ${isMain ? 'id="detailMainMedia"' : ''} onerror="this.src='https://placehold.co/400x300/eee/999?text=Error'" style="width:100%;border-radius:8px;">`;
+}
+
 function viewDetail(id) {
     const news = allNewsData.find(n => n.id === id);
     if (!news) return;
     const media = Array.isArray(news.gambar) ? news.gambar : [news.gambar];
     const submitter = news.submittedBy || {};
+    
+    // Render all media (images and videos)
+    let mediaHtml = '';
+    if (media.length > 0 && media[0]) {
+        mediaHtml = `<div class="adm-detail-gallery"><div class="adm-gallery-main">${renderMediaElement(media[0], true)}</div>`;
+        if (media.length > 1) {
+            mediaHtml += `<div class="adm-gallery-thumbs" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">`;
+            media.forEach((m, i) => {
+                if (m) {
+                    if (isVideoUrl(m)) {
+                        mediaHtml += `<div style="width:80px;height:60px;background:#333;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;font-size:20px;" onclick="changeMainMedia('${m}', true)">▶</div>`;
+                    } else {
+                        mediaHtml += `<img src="${m}" style="width:80px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="changeMainMedia('${m}', false)">`;
+                    }
+                }
+            });
+            mediaHtml += `</div>`;
+        }
+        mediaHtml += `</div>`;
+    }
+    
     document.getElementById('modalBody').innerHTML = `
         <div class="adm-detail-header">
             <span class="adm-news-status ${news.status}">${statusLabel(news.status)}</span>
             <h2 class="adm-detail-title">${escapeHtml(news.judul)}</h2>
         </div>
-        <div class="adm-detail-gallery">
-            <div class="adm-gallery-main">
-                <img src="${media[0]}" alt="" id="detailMainMedia" onerror="this.src='https://placehold.co/400x300/eee/999?text=Error'">
-            </div>
-        </div>
+        ${mediaHtml}
         <div class="adm-detail-info">
             <div class="adm-detail-row"><span class="adm-detail-label">Penerbit</span><span class="adm-detail-value">${escapeHtml(news.penerbit)}</span></div>
             <div class="adm-detail-row"><span class="adm-detail-label">Kategori</span><span class="adm-detail-value">${capitalize(news.kategori)}</span></div>
@@ -233,6 +269,14 @@ function viewDetail(id) {
     `;
     document.getElementById('detailModal').classList.add('active');
 }
+
+function changeMainMedia(url, isVideo) {
+    const container = document.querySelector('.adm-gallery-main');
+    if (container) {
+        container.innerHTML = renderMediaElement(url, true);
+    }
+}
+window.changeMainMedia = changeMainMedia;
 
 function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
 
@@ -492,14 +536,41 @@ function renderQuizLeaderboard(players) {
                     <div class="adm-lb-name">${escapeHtml(player.name)}</div>
                     <div class="adm-lb-email">${escapeHtml(player.email)}</div>
                 </div>
-                <div style="text-align:right;">
-                    <div class="adm-lb-score">${player.totalScore}</div>
-                    <div class="adm-lb-count">${player.quizCount}x main</div>
+                <div style="text-align:right;display:flex;align-items:center;gap:15px;">
+                    <div>
+                        <div class="adm-lb-score">${player.totalScore}</div>
+                        <div class="adm-lb-count">${player.quizCount}x main</div>
+                    </div>
+                    <button type="button" class="adm-btn-delete-player" onclick="deleteQuizPlayer('${player.oderId}')" title="Hapus pemain">🗑️</button>
                 </div>
             </div>
         `;
     }).join('');
 }
+
+function deleteQuizPlayer(oderId) {
+    if (!confirm('Hapus pemain ini dari leaderboard? Data hasil quiz juga akan dihapus.')) return;
+    
+    // Hapus dari leaderboard
+    eventAdminDb.ref('quizLeaderboard/' + oderId).remove()
+        .then(() => {
+            // Hapus semua hasil quiz pemain ini
+            eventAdminDb.ref('quizResults').orderByChild('oderId').equalTo(oderId).once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const updates = {};
+                    Object.keys(data).forEach(key => {
+                        updates[key] = null;
+                    });
+                    eventAdminDb.ref('quizResults').update(updates);
+                }
+            });
+            loadQuizLeaderboard();
+            loadQuizStats();
+        })
+        .catch(err => alert('Gagal menghapus: ' + err.message));
+}
+window.deleteQuizPlayer = deleteQuizPlayer;
 
 function showQuizTab(tab) {
     document.querySelectorAll('.adm-quiz-tab').forEach(t => t.classList.remove('active'));
@@ -507,6 +578,8 @@ function showQuizTab(tab) {
     
     document.getElementById('quizQuestionsTab').style.display = tab === 'questions' ? 'block' : 'none';
     document.getElementById('quizStatsTab').style.display = tab === 'stats' ? 'block' : 'none';
+    const hadiahTab = document.getElementById('quizHadiahTab');
+    if (hadiahTab) hadiahTab.style.display = tab === 'hadiah' ? 'block' : 'none';
     
     if (tab === 'stats') {
         loadQuizLeaderboard();

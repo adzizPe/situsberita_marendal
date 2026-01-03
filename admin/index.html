@@ -175,6 +175,7 @@
                 <div class="adm-quiz-tabs">
                     <button type="button" class="adm-quiz-tab active" onclick="showQuizTab('questions')">📝 Kelola Soal</button>
                     <button type="button" class="adm-quiz-tab" onclick="showQuizTab('stats')">📊 Statistik Pemain</button>
+                    <button type="button" class="adm-quiz-tab" onclick="showQuizTab('hadiah')">🎁 Hadiah</button>
                 </div>
                 
                 <!-- Questions Tab -->
@@ -195,6 +196,34 @@
                     </div>
                     <div class="adm-quiz-leaderboard" id="quizLeaderboardList">
                         <p class="adm-loading">Memuat data...</p>
+                    </div>
+                </div>
+                
+                <!-- Hadiah Tab -->
+                <div class="adm-quiz-content" id="quizHadiahTab" style="display: none;">
+                    <div class="adm-hadiah-info">
+                        <h3>🎁 Hadiah Mingguan</h3>
+                        <p>Pemain dengan skor tertinggi setiap minggu berkesempatan mendapat hadiah:</p>
+                        <div class="adm-hadiah-list">
+                            <div class="adm-hadiah-item">
+                                <span class="adm-hadiah-icon">📱</span>
+                                <div>
+                                    <strong>Pulsa 10K</strong>
+                                    <small>Untuk peringkat 1</small>
+                                </div>
+                            </div>
+                            <div class="adm-hadiah-item">
+                                <span class="adm-hadiah-icon">💰</span>
+                                <div>
+                                    <strong>Saldo DANA 10K</strong>
+                                    <small>Untuk peringkat 2</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="adm-hadiah-note">
+                            <p>* Pemenang diumumkan setiap hari Minggu</p>
+                            <p>* Hubungi admin untuk klaim hadiah</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -316,6 +345,25 @@
             .adm-quiz-item { flex-direction: column; }
             .adm-quiz-actions { width: 100%; justify-content: flex-end; }
         }
+        
+        /* Hadiah Styles */
+        .adm-hadiah-info { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 25px; }
+        .adm-hadiah-info h3 { font-size: 1.1rem; margin-bottom: 10px; color: #333; }
+        .adm-hadiah-info > p { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+        .adm-hadiah-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .adm-hadiah-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .adm-hadiah-icon { font-size: 1.5rem; }
+        .adm-hadiah-item strong { display: block; color: #333; font-size: 0.95rem; }
+        .adm-hadiah-item small { color: #888; font-size: 0.8rem; }
+        .adm-hadiah-note { padding-top: 15px; border-top: 1px solid #eee; }
+        .adm-hadiah-note p { font-size: 0.8rem; color: #888; margin: 5px 0; }
+        
+        /* Delete player button */
+        .adm-btn-delete-player { 
+            padding: 6px 10px; background: #fff; border: 1px solid #ddd; 
+            border-radius: 5px; cursor: pointer; font-size: 0.85rem; 
+        }
+        .adm-btn-delete-player:hover { background: #fef2f2; border-color: #dc2626; }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>

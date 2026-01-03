@@ -23,6 +23,22 @@
         .quiz-header h1 { font-size: 1.6rem; color: #fff; margin-bottom: 8px; }
         .quiz-header p { color: rgba(255,255,255,0.85); font-size: 0.95rem; }
         
+        /* Hadiah Info */
+        .quiz-hadiah {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .quiz-hadiah-title { font-weight: 600; color: #92400e; font-size: 0.85rem; }
+        .quiz-hadiah-items { display: flex; gap: 15px; font-size: 0.8rem; color: #78350f; }
+        .quiz-hadiah-items span { display: flex; align-items: center; gap: 4px; }
+        
         .quiz-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -200,7 +216,16 @@
             <div class="quiz-page">
                 <div class="quiz-header">
                     <h1>🎯 Quiz Berita Harian</h1>
-                    <p>Uji pengetahuanmu tentang berita terkini!</p>
+                    <p>Uji pengetahuanmu tentang Sumatera Utara</p>
+                </div>
+                
+                <!-- Hadiah Info -->
+                <div class="quiz-hadiah">
+                    <div class="quiz-hadiah-title">🎁 Hadiah Mingguan:</div>
+                    <div class="quiz-hadiah-items">
+                        <span>🥇 Pulsa 10K</span>
+                        <span>🥈 DANA 10K</span>
+                    </div>
                 </div>
                 
                 <div class="quiz-card" id="quizContainer">
